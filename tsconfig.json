@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"module": "CommonJS",
+		"esModuleInterop": true,
+		"target": "ES6",
+		"rootDir": "./",
+		"outDir": "./dist",
+		"strict": true,
+		"moduleResolution": "Node",
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"baseUrl": "./",
+		"paths": {
+			"@/*": ["./*"]
+		}
+	},
+	"include": ["**/*.ts"],
+	"exclude": ["dist", "node_modules"]
+}
