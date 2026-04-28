@@ -1,6 +1,6 @@
 {
 	"name": "create-typescript-express",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Create a lightweight Express 5 application with TypeScript, linting, tests, Docker, and CI.",
 	"author": "BlackishGreen33 <s5460703@gmail.com>",
 	"license": "MIT",

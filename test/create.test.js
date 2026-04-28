@@ -37,6 +37,14 @@ test("creates a project from the bundled template", () => {
 	assert.equal(generatedPackage.private, true);
 	assert.equal(generatedPackage.dependencies.express, "^5.2.1");
 
+	const generatedLock = JSON.parse(
+		fs.readFileSync(path.join(targetDir, "package-lock.json"), "utf8")
+	);
+	assert.equal(generatedLock.name, "my-api");
+	assert.equal(generatedLock.version, "0.1.0");
+	assert.equal(generatedLock.packages[""].name, "my-api");
+	assert.equal(generatedLock.packages[""].version, "0.1.0");
+
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });
 

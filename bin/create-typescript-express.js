@@ -67,6 +67,10 @@ function copyTemplate(sourceDir, targetDir) {
 	}
 }
 
+function writeJson(filePath, data) {
+	fs.writeFileSync(filePath, `${JSON.stringify(data, null, "\t")}\n`);
+}
+
 function updateGeneratedPackage(targetDir, packageName) {
 	const packagePath = path.join(targetDir, "package.json");
 	const generatedPackage = JSON.parse(fs.readFileSync(packagePath, "utf8"));
@@ -75,7 +79,26 @@ function updateGeneratedPackage(targetDir, packageName) {
 	generatedPackage.version = "0.1.0";
 	generatedPackage.private = true;
 
-	fs.writeFileSync(packagePath, `${JSON.stringify(generatedPackage, null, "\t")}\n`);
+	writeJson(packagePath, generatedPackage);
+}
+
+function updateGeneratedPackageLock(targetDir, packageName) {
+	const lockPath = path.join(targetDir, "package-lock.json");
+	if (!fs.existsSync(lockPath)) {
+		return;
+	}
+
+	const generatedLock = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+
+	generatedLock.name = packageName;
+	generatedLock.version = "0.1.0";
+
+	if (generatedLock.packages && generatedLock.packages[""]) {
+		generatedLock.packages[""].name = packageName;
+		generatedLock.packages[""].version = "0.1.0";
+	}
+
+	writeJson(lockPath, generatedLock);
 }
 
 function main(argv) {
@@ -101,6 +124,7 @@ function main(argv) {
 	assertUsableTarget(targetDir);
 	copyTemplate(templateDir, targetDir);
 	updateGeneratedPackage(targetDir, projectName);
+	updateGeneratedPackageLock(targetDir, projectName);
 
 	const relativeTarget = path.relative(process.cwd(), targetDir) || ".";
 	console.log(`Created ${projectName} in ${relativeTarget}`);
