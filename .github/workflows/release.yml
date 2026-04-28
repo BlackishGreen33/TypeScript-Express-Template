@@ -30,5 +30,16 @@ jobs:
             - name: Run release checks
               run: npm run check
 
+            - name: Check registry version
+              id: registry
+              shell: bash
+              run: |
+                  if npm view "$npm_package_name@$npm_package_version" version >/dev/null 2>&1; then
+                      echo "published=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "published=false" >> "$GITHUB_OUTPUT"
+                  fi
+
             - name: Publish package
+              if: steps.registry.outputs.published == 'false'
               run: npm publish --provenance
