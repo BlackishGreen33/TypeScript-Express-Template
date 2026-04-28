@@ -11,6 +11,7 @@
 </div>
 
 Based on templates:
+
 - [Express](https://www.npmjs.com/package/express) official template.
 
 ## ✨ Features
@@ -20,41 +21,56 @@ Based on templates:
 - Includes a basic directory structure and configuration for easy project startup.
 
 ## 💻 Start with Template
+
 Clone This Project：
+
 ```bash
 $ git clone https://github.com/BlackishGreen33/TypeScript-Express-Template.git
 $ cd TypeScript-Express-Template
 ```
+
 Install the required packages for your project：
+
 ```bash
 $ npm install
 ```
+
 Start project development：
+
 ```bash
 $ npm run dev
 ```
 
 Build and run the compiled project：
+
 ```bash
 $ npm run build
 $ npm run start:prod
 ```
 
 Run checks：
+
 ```bash
+$ npm run check
 $ npm run typecheck
+$ npm run lint
+$ npm run format:check
 $ npm test
 ```
 
 ## 👥 Contributing
+
 Contributions of any kind are welcome, including but not limited to:
+
 - [Reporting bugs](https://github.com/BlackishGreen33/TypeScript-Express-Template/issues)
 - [Submitting improvement suggestions](https://github.com/BlackishGreen33/TypeScript-Express-Template/issues)
 - Contributing code (Please fork this repository and open a pull request)
 
 ## 📝 License
+
 This project is licensed under the [MIT License](LICENSE).
 
 ## 💬 Contact
+
 [![Email](https://img.shields.io/badge/-Gmail-ea4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:s5460703@gmail.com)
 [![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BlackishGreen33)
