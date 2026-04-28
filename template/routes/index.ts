@@ -2,7 +2,7 @@ import express, { Router } from "express";
 
 import { RouteType } from "../types";
 
-import { home } from "./handlers";
+import { health, home } from "./handlers";
 
 type RouterType = {
 	path: string;
@@ -18,6 +18,12 @@ const routes: RouteType[] = [
 		path: "/",
 		middleware: [],
 		handler: home
+	},
+	{
+		method: "get",
+		path: "/health",
+		middleware: [],
+		handler: health
 	}
 ];
 

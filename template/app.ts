@@ -23,7 +23,7 @@ for (const router of routers) {
 	}
 }
 
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((_req: Request, _res: Response, next: NextFunction) => {
 	next(createError(404, "Not Found"));
 });
 

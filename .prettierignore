@@ -1,3 +1,8 @@
 dist
 node_modules
+template/node_modules
+template/dist
+.tmp
+*.tgz
 package-lock.json
+template/package-lock.json

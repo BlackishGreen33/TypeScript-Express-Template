@@ -12,6 +12,13 @@ test("GET / returns the template greeting", async () => {
 	assert.equal(response.text, "Hello World!");
 });
 
+test("GET /health returns a JSON health response", async () => {
+	const response = await request(app).get("/health").expect(200);
+
+	assert.equal(response.body.status, "ok");
+	assert.equal(response.body.service, "typescript-express-app");
+});
+
 test("GET /not-found uses the app error view without a stack trace", async () => {
 	const response = await request(app).get("/not-found").expect(404);
 

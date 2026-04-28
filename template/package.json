@@ -1,0 +1,51 @@
+{
+	"name": "typescript-express-app",
+	"version": "0.1.0",
+	"private": true,
+	"description": "A lightweight Express 5 application built with TypeScript.",
+	"license": "MIT",
+	"engines": {
+		"node": ">=24",
+		"npm": ">=10"
+	},
+	"scripts": {
+		"dev": "tsx watch --clear-screen=false bin/server.ts",
+		"start": "node dist/bin/server.js",
+		"copy-static": "tsx copyStatic.ts",
+		"ts-build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml,css}\"",
+		"format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml,css}\"",
+		"build": "npm run ts-build && npm run copy-static",
+		"test": "npm run build && node --test test/*.test.js",
+		"check": "npm run typecheck && npm run lint && npm run format:check && npm test"
+	},
+	"dependencies": {
+		"cookie-parser": "^1.4.7",
+		"debug": "^4.4.3",
+		"dotenv": "^17.4.2",
+		"express": "^5.2.1",
+		"http-errors": "^2.0.1",
+		"morgan": "^1.10.1",
+		"pug": "^3.0.3"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/cookie-parser": "^1.4.10",
+		"@types/debug": "^4.1.13",
+		"@types/express": "^5.0.6",
+		"@types/http-errors": "^2.0.5",
+		"@types/morgan": "^1.9.10",
+		"@types/node": "^24.12.2",
+		"@types/supertest": "^7.2.0",
+		"eslint": "^10.2.1",
+		"globals": "^17.5.0",
+		"prettier": "^3.8.3",
+		"supertest": "^7.2.2",
+		"tsx": "^4.21.0",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.59.1"
+	}
+}

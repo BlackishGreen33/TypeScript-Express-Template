@@ -1,0 +1,7 @@
+node_modules
+dist
+.tmp
+*.tgz
+template/node_modules
+template/dist
+template/.tmp

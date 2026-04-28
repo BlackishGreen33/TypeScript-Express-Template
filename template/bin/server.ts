@@ -54,7 +54,7 @@ function onListening() {
 }
 
 server.listen(port, () => {
-	console.log(`Express with Typescript! http://localhost:${port}`);
+	console.log(`Express with TypeScript is running at http://localhost:${port}`);
 });
 server.on("error", onError);
 server.on("listening", onListening);

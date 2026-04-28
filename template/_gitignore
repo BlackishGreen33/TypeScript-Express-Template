@@ -1,8 +1,8 @@
 node_modules
 dist
-template/node_modules
-template/dist
+coverage
+.env
+.env.local
 .tmp
-*.tgz
 npm-debug.log*
 .DS_Store
