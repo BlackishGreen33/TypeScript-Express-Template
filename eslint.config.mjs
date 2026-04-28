@@ -3,14 +3,7 @@ import globals from "globals";
 
 export default [
 	{
-		ignores: [
-			"node_modules/**",
-			"dist/**",
-			"template/node_modules/**",
-			"template/dist/**",
-			".tmp/**",
-			"*.tgz"
-		]
+		ignores: ["node_modules/**", "dist/**", "template/**", ".tmp/**", "*.tgz"]
 	},
 	js.configs.recommended,
 	{
