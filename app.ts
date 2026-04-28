@@ -18,16 +18,16 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 for (const router of routers) {
-  if (router.path && router.router) {
-    app.use(router.path, router.router);
-  }
+	if (router.path && router.router) {
+		app.use(router.path, router.router);
+	}
 }
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  next(createError(404, 'Not Found'));
+	next(createError(404, "Not Found"));
 });
 
-app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
+app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
 	const status = err.status || 500;
 
 	res.locals.message = err.message;

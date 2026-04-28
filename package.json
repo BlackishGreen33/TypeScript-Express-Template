@@ -5,6 +5,10 @@
 	"description": "An initial template for an Express project based on TypeScript",
 	"author": "BlackishGreen33 <s5460703@gmail.com>",
 	"license": "MIT",
+	"engines": {
+		"node": ">=20",
+		"npm": ">=10"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/BlackishGreen33/TypeScript-Express-Template.git"
@@ -24,8 +28,13 @@
 		"copy-static": "ts-node copyStatic.ts",
 		"ts-build": "tsc",
 		"typecheck": "tsc --noEmit",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml,css}\"",
+		"format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml,css}\"",
 		"build": "npm run ts-build && npm run copy-static",
-		"test": "npm run build && node --test test/*.test.js"
+		"test": "npm run build && node --test test/*.test.js",
+		"check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
 	},
 	"dependencies": {
 		"cookie-parser": "^1.4.6",
@@ -37,15 +46,21 @@
 		"pug": "^3.0.3"
 	},
 	"devDependencies": {
+		"@eslint/js": "^9.39.4",
 		"@types/cookie-parser": "^1.4.7",
 		"@types/debug": "^4.1.12",
 		"@types/express": "^4.17.21",
 		"@types/http-errors": "^2.0.4",
 		"@types/morgan": "^1.9.9",
 		"@types/node": "^20.12.12",
+		"@types/supertest": "^7.2.0",
+		"eslint": "^9.39.4",
+		"globals": "^17.5.0",
 		"nodemon": "^3.1.0",
+		"prettier": "^3.8.3",
 		"supertest": "^7.0.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.4.5"
+		"typescript": "^5.4.5",
+		"typescript-eslint": "^8.59.1"
 	}
 }

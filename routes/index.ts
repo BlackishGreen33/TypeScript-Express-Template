@@ -17,8 +17,8 @@ const routes: RouteType[] = [
 		method: "get",
 		path: "/",
 		middleware: [],
-		handler: home,
-	},
+		handler: home
+	}
 ];
 
 routes.map((route) => {

@@ -48,8 +48,8 @@ function onError(error: HttpError) {
 }
 
 function onListening() {
-	var addr = server.address();
-	var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr!.port;
+	const addr = server.address();
+	const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr!.port;
 	debug("typescript-express:server")("Listening on " + bind);
 }
 
