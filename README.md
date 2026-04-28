@@ -1,76 +1,123 @@
-<h1 align="center">TypeScript-Express-Template</h1>
-<div align="center">
-  <h3>An initial template for an Express project based on TypeScript</h3>
-  <a href="https://github.com/BlackishGreen33/TypeScript-Express-Template"><strong>Explore project documents »</strong></a>
-  <br />
-  <br />
-  
-  ![license](https://img.shields.io/github/license/BlackishGreen33/TypeScript-Express-Template)
-  ![language](https://img.shields.io/github/languages/top/BlackishGreen33/TypeScript-Express-Template)
-  ![last](https://img.shields.io/github/last-commit/BlackishGreen33/TypeScript-Express-Template)
-</div>
+<h1 align="center">create-typescript-express</h1>
 
-Based on templates:
+<p align="center">
+  A lightweight npm initializer for Express 5, TypeScript, linting, tests, Docker, and CI.
+</p>
 
-- [Express](https://www.npmjs.com/package/express) official template.
+<p align="center">
+  <a href="./README.md">English</a>
+  ·
+  <a href="./README.zh-TW.md">繁體中文</a>
+  ·
+  <a href="./README.zh-CN.md">简体中文</a>
+</p>
 
-## ✨ Features
+<p align="center">
+  <img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D24-339933?logo=node.js&logoColor=white">
+  <img alt="Express" src="https://img.shields.io/badge/express-5.x-000000?logo=express&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/typescript-6.x-3178C6?logo=typescript&logoColor=white">
+  <img alt="License" src="https://img.shields.io/github/license/BlackishGreen33/TypeScript-Express-Template">
+</p>
 
-- Developed using TypeScript for type checking and an enhanced development experience.
-- Integrated with the Express.js framework for quickly building RESTful APIs.
-- Includes a basic directory structure and configuration for easy project startup.
+## Why This Template
 
-## 💻 Start with Template
+`create-typescript-express` gives you a small production-minded Express starter without forcing a database, ORM, authentication layer, or API documentation stack on every new project.
 
-Clone This Project：
+It is designed for teams that want a clean base that runs immediately after creation:
 
-```bash
-$ git clone https://github.com/BlackishGreen33/TypeScript-Express-Template.git
-$ cd TypeScript-Express-Template
-```
+- Express 5 with TypeScript strict mode.
+- Node 24 LTS baseline and npm lockfile support.
+- `tsx` development server, compiled production output, and static asset copying.
+- ESLint, Prettier, `node:test`, Supertest, and GitHub Actions.
+- Dockerfile, health check endpoint, `.env.example`, and multilingual docs.
 
-Install the required packages for your project：
+> [!TIP]
+> Heavy API features such as Prisma, OpenAPI, JWT auth, queues, or background workers are intentionally left out. Add them when the project actually needs them.
 
-```bash
-$ npm install
-```
-
-Start project development：
-
-```bash
-$ npm run dev
-```
-
-Build and run the compiled project：
+## Quick Start
 
 ```bash
-$ npm run build
-$ npm run start:prod
+npm create typescript-express@latest my-api
+cd my-api
+npm install
+npm run dev
 ```
 
-Run checks：
+Open `http://localhost:8000`.
+
+Generated projects include:
 
 ```bash
-$ npm run check
-$ npm run typecheck
-$ npm run lint
-$ npm run format:check
-$ npm test
+npm run typecheck
+npm run lint
+npm run format:check
+npm test
+npm run build
+npm run check
 ```
 
-## 👥 Contributing
+## Generated Project
 
-Contributions of any kind are welcome, including but not limited to:
+```text
+my-api
+├── app.ts
+├── bin/server.ts
+├── routes/
+├── test/
+├── views/
+├── public/
+├── Dockerfile
+├── package-lock.json
+└── .github/workflows/ci.yml
+```
 
-- [Reporting bugs](https://github.com/BlackishGreen33/TypeScript-Express-Template/issues)
-- [Submitting improvement suggestions](https://github.com/BlackishGreen33/TypeScript-Express-Template/issues)
-- Contributing code (Please fork this repository and open a pull request)
+The generated application exposes:
 
-## 📝 License
+- `GET /` - a minimal starter route.
+- `GET /health` - JSON health response for smoke checks and containers.
+- 404 handling with a Pug error view.
 
-This project is licensed under the [MIT License](LICENSE).
+## Package Development
 
-## 💬 Contact
+This repository is the npm initializer package. The application that users receive lives in `template/`.
 
-[![Email](https://img.shields.io/badge/-Gmail-ea4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:s5460703@gmail.com)
-[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/BlackishGreen33)
+```bash
+npm ci
+npm run check
+```
+
+The root check validates:
+
+- The initializer CLI.
+- The bundled template.
+- A generated smoke project.
+- `npm pack --dry-run`.
+- Production dependency audit.
+
+## Publishing
+
+The package name is `create-typescript-express`, so npm maps:
+
+```bash
+npm create typescript-express@latest my-api
+```
+
+to:
+
+```bash
+npm exec create-typescript-express@latest my-api
+```
+
+Releases are intended to be published from GitHub Actions on `v*` tags with npm Trusted Publishing and provenance enabled. Before pushing a tag, run:
+
+```bash
+npm version patch
+git push origin main --follow-tags
+```
+
+> [!IMPORTANT]
+> Configure this package as a trusted publisher in npm before relying on the release workflow. Without that npm-side setup, the workflow can run checks but cannot publish via OIDC.
+
+## License
+
+MIT License. See [LICENSE](./LICENSE).
