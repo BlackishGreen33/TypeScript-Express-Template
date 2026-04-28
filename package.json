@@ -2,6 +2,21 @@
 	"name": "typescript-express-template",
 	"version": "1.0.0",
 	"private": true,
+	"description": "An initial template for an Express project based on TypeScript",
+	"author": "BlackishGreen33 <s5460703@gmail.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/BlackishGreen33/TypeScript-Express-Template.git"
+	},
+	"bugs": {
+		"url": "https://github.com/BlackishGreen33/TypeScript-Express-Template/issues"
+	},
+	"keywords": [
+		"typescript",
+		"express",
+		"template"
+	],
 	"scripts": {
 		"start": "ts-node bin/server.ts",
 		"dev": "nodemon bin/server.ts",
