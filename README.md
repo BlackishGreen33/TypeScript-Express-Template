@@ -20,15 +20,10 @@ Based on templates:
 - Includes a basic directory structure and configuration for easy project startup.
 
 ## 💻 Start with Template
-Please install TypeScript-related packages first for development (recommended)：
-```bash
-$ npm install typescript -D
-$ npm install ts-node -g
-$ npm install ts-node-dev -g
-```
 Clone This Project：
 ```bash
 $ git clone https://github.com/BlackishGreen33/TypeScript-Express-Template.git
+$ cd TypeScript-Express-Template
 ```
 Install the required packages for your project：
 ```bash
@@ -37,6 +32,18 @@ $ npm install
 Start project development：
 ```bash
 $ npm run dev
+```
+
+Build and run the compiled project：
+```bash
+$ npm run build
+$ npm run start:prod
+```
+
+Run checks：
+```bash
+$ npm run typecheck
+$ npm test
 ```
 
 ## 👥 Contributing
