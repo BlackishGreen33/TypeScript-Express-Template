@@ -1,4 +1,4 @@
-import * as shelljs from "shelljs";
+import { cpSync } from "fs";
 
-shelljs.cp("-R", "public", "dist");
-shelljs.cp("-R", "views", "dist");
+cpSync("public", "dist/public", { recursive: true });
+cpSync("views", "dist/views", { recursive: true });

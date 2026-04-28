@@ -9,7 +9,7 @@ import routers from "./routes";
 const app: Application = express();
 
 app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "jade");
+app.set("view engine", "pug");
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -27,11 +27,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next(createError(404, 'Not Found'));
 });
 
-app.use((err: HttpError, req: Request, res: Response) => {
+app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
+	const status = err.status || 500;
+
 	res.locals.message = err.message;
+	res.locals.status = status;
 	res.locals.error = req.app.get("env") === "development" ? err : {};
 
-	res.status(err.status || 500);
+	res.status(status);
 	res.render("error");
 });
 

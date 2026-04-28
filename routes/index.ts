@@ -1,6 +1,6 @@
 import express, { Router } from "express";
 
-import { RouteType } from "@/types";
+import { RouteType } from "../types";
 
 import { home } from "./handlers";
 

@@ -8,11 +8,7 @@
 		"strict": true,
 		"moduleResolution": "Node",
 		"noImplicitThis": true,
-		"noUnusedLocals": true,
-		"baseUrl": "./",
-		"paths": {
-			"@/*": ["./*"]
-		}
+		"noUnusedLocals": true
 	},
 	"include": ["**/*.ts"],
 	"exclude": ["dist", "node_modules"]

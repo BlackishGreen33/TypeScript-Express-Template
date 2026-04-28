@@ -1,11 +1,9 @@
-import "module-alias/register";
-
 import debug from "debug";
 import http from "http";
 import { HttpError } from "http-errors";
 import * as dotenv from "dotenv";
 
-import app from "@/app";
+import app from "../app";
 
 dotenv.config();
 
