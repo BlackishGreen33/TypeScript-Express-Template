@@ -1,8 +1,8 @@
 import express, { Router } from "express";
 
-import { RouteType } from "../types";
+import { RouteType } from "@/types";
 
-import { health, home } from "./handlers";
+import { health, home } from "@/routes/handlers";
 
 type RouterType = {
 	path: string;

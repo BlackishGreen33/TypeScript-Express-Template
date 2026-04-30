@@ -42,6 +42,11 @@
 		"boilerplate",
 		"starter"
 	],
+	"dependencies": {
+		"@clack/prompts": "^1.2.0",
+		"commander": "^14.0.3",
+		"picocolors": "^1.1.1"
+	},
 	"scripts": {
 		"lint": "eslint .",
 		"format": "prettier --write \"**/*.{js,mjs,json,md,yml,yaml,css,ts}\"",

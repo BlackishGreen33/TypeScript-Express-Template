@@ -6,6 +6,11 @@
 		"lib": ["ES2023"],
 		"rootDir": "./",
 		"outDir": "./dist",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./*"]
+		},
+		"ignoreDeprecations": "6.0",
 		"strict": true,
 		"moduleResolution": "NodeNext",
 		"noImplicitThis": true,

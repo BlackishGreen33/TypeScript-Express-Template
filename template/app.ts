@@ -4,7 +4,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 
-import routers from "./routes";
+import routers from "@/routes";
 
 const app: Application = express();
 

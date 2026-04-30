@@ -18,7 +18,7 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml,css}\"",
 		"format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml,css}\"",
-		"build": "npm run ts-build && npm run copy-static",
+		"build": "npm run ts-build && tsc-alias && npm run copy-static",
 		"test": "npm run build && node --test test/*.test.js",
 		"check": "npm run typecheck && npm run lint && npm run format:check && npm test"
 	},
@@ -44,6 +44,7 @@
 		"globals": "^17.5.0",
 		"prettier": "^3.8.3",
 		"supertest": "^7.2.2",
+		"tsc-alias": "^1.8.16",
 		"tsx": "^4.21.0",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.1"
