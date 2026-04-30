@@ -25,7 +25,7 @@ export default tseslint.config(
 		}
 	},
 	{
-		files: ["test/**/*.js"],
+		files: ["test/**/*.ts"],
 		languageOptions: {
 			ecmaVersion: "latest",
 			sourceType: "commonjs",

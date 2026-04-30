@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"target": "ES2023",
+		"lib": ["ES2023"],
+		"rootDir": "src/cli",
+		"outDir": "dist-cli",
+		"strict": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"types": ["node"],
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/cli/**/*.mts"]
+}

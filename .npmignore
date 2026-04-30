@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-cli
 .tmp
 *.tgz
 template/node_modules

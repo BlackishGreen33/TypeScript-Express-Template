@@ -1,14 +1,15 @@
 {
 	"name": "create-typescript-express",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Create a lightweight Express 5 application with TypeScript, linting, tests, Docker, and CI.",
 	"author": "BlackishGreen33 <s5460703@gmail.com>",
 	"license": "MIT",
 	"bin": {
-		"create-typescript-express": "bin/create-typescript-express.js"
+		"create-typescript-express": "dist-cli/create-typescript-express.mjs"
 	},
 	"files": [
-		"bin",
+		"dist-cli",
+		"bin/snippets",
 		"template",
 		"!template/node_modules",
 		"!template/node_modules/**",
@@ -48,22 +49,29 @@
 		"picocolors": "^1.1.1"
 	},
 	"scripts": {
-		"lint": "eslint .",
-		"format": "prettier --write \"**/*.{js,mjs,json,md,yml,yaml,css,ts}\"",
-		"format:check": "prettier --check \"**/*.{js,mjs,json,md,yml,yaml,css,ts}\"",
+		"build:cli": "tsc -p tsconfig.cli.json",
+		"typecheck": "tsc -p tsconfig.cli.json --noEmit",
+		"lint": "eslint . --ext .js,.mjs,.mts",
+		"format": "prettier --write \"**/*.{js,mjs,mts,json,md,yml,yaml,css,ts}\"",
+		"format:check": "prettier --check \"**/*.{js,mjs,mts,json,md,yml,yaml,css,ts}\"",
+		"pretest": "npm run build:cli",
 		"test": "node --test test/*.test.js",
 		"test:template": "npm --prefix template ci && npm --prefix template run check",
 		"test:smoke": "node test/smoke-create.js",
 		"test:docker": "node test/docker-smoke.js",
+		"prepack": "npm run build:cli",
 		"pack:dry-run": "npm pack --dry-run",
 		"audit": "npm audit --omit dev",
 		"audit:template": "npm --prefix template audit --omit dev",
-		"check": "npm run lint && npm run format:check && npm test && npm run test:template && npm run test:smoke && npm run pack:dry-run && npm run audit && npm run audit:template"
+		"check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:template && npm run test:smoke && npm run pack:dry-run && npm run audit && npm run audit:template"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@types/node": "^24.12.2",
 		"eslint": "^10.2.1",
 		"globals": "^17.5.0",
-		"prettier": "^3.8.3"
+		"prettier": "^3.8.3",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.59.1"
 	}
 }

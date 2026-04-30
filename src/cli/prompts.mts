@@ -1,23 +1,41 @@
-const {
+import pc from "picocolors";
+
+import {
 	DEFAULT_IMPORT_ALIAS,
 	featureDefinitions,
 	supportedPackageManagers
-} = require("./constants");
+} from "./constants.mjs";
+import type {
+	CreateConfig,
+	CreateConfigDraft,
+	FeatureName,
+	PackageManager,
+	PromptOptions
+} from "./types.mjs";
 
-function detectPackageManager() {
+type Prompts = typeof import("@clack/prompts");
+
+const packageManagerOptionKeys: Record<PackageManager, keyof PromptOptions> = {
+	npm: "useNpm",
+	pnpm: "usePnpm",
+	yarn: "useYarn",
+	bun: "useBun"
+};
+
+export function detectPackageManager(): PackageManager {
 	const userAgent = process.env.npm_config_user_agent || "";
 	const [name] = userAgent.split("/");
 
-	if (supportedPackageManagers.includes(name)) {
-		return name;
+	if (supportedPackageManagers.includes(name as PackageManager)) {
+		return name as PackageManager;
 	}
 
 	return "npm";
 }
 
-function parsePackageManager(options) {
+function parsePackageManager(options: PromptOptions): PackageManager {
 	const selected = supportedPackageManagers.filter(
-		(manager) => options[`use${capitalize(manager)}`]
+		(manager) => options[packageManagerOptionKeys[manager]]
 	);
 
 	if (selected.length > 1) {
@@ -27,7 +45,7 @@ function parsePackageManager(options) {
 	return selected[0] || detectPackageManager();
 }
 
-function parseFeatures(value) {
+function parseFeatures(value: string | undefined): FeatureName[] {
 	if (!value) {
 		return [];
 	}
@@ -40,16 +58,20 @@ function parseFeatures(value) {
 		.split(",")
 		.map((feature) => feature.trim())
 		.filter(Boolean);
-	const unknown = features.filter((feature) => !featureDefinitions[feature]);
+	const unknown = features.filter((feature) => !isFeatureName(feature));
 
 	if (unknown.length > 0) {
 		throw new Error(`Unknown feature option: ${unknown.join(", ")}`);
 	}
 
-	return [...new Set(features)];
+	return [...new Set(features)] as FeatureName[];
 }
 
-function validateImportAlias(alias) {
+function isFeatureName(value: string): value is FeatureName {
+	return Object.hasOwn(featureDefinitions, value);
+}
+
+export function validateImportAlias(alias: string | false | undefined): string | false {
 	if (alias === false) {
 		return false;
 	}
@@ -65,7 +87,10 @@ function validateImportAlias(alias) {
 	return alias;
 }
 
-function createBaseConfig(projectPath, options) {
+function createBaseConfig(
+	projectPath: string | undefined,
+	options: PromptOptions
+): CreateConfigDraft {
 	return {
 		projectPath,
 		importAlias: validateImportAlias(options.importAlias),
@@ -82,7 +107,11 @@ function createBaseConfig(projectPath, options) {
 	};
 }
 
-async function resolveConfig(projectPath, options, meta = {}) {
+export async function resolveConfig(
+	projectPath: string | undefined,
+	options: PromptOptions,
+	meta: { argv?: string[] } = {}
+): Promise<CreateConfig> {
 	const baseConfig = createBaseConfig(projectPath, options);
 	const isInteractive = process.stdin.isTTY && process.stdout.isTTY;
 
@@ -91,7 +120,7 @@ async function resolveConfig(projectPath, options, meta = {}) {
 			throw new Error("Project name is required when using --yes.");
 		}
 
-		return baseConfig;
+		return requireProjectPath(baseConfig);
 	}
 
 	if (!isInteractive) {
@@ -103,7 +132,15 @@ async function resolveConfig(projectPath, options, meta = {}) {
 	return promptForConfig(baseConfig);
 }
 
-function hasCompleteFlagConfig(projectPath, argv) {
+function requireProjectPath(config: CreateConfigDraft): CreateConfig {
+	if (!config.projectPath) {
+		throw new Error("Project name is required.");
+	}
+
+	return { ...config, projectPath: config.projectPath };
+}
+
+function hasCompleteFlagConfig(projectPath: string | undefined, argv: string[]) {
 	return (
 		Boolean(projectPath) &&
 		hasFlag(argv, "--features") &&
@@ -112,32 +149,32 @@ function hasCompleteFlagConfig(projectPath, argv) {
 	);
 }
 
-function hasFlag(argv, flag) {
+function hasFlag(argv: string[], flag: string) {
 	return argv.some((arg) => arg === flag || arg.startsWith(`${flag}=`));
 }
 
-async function promptForConfig(config) {
+async function promptForConfig(config: CreateConfigDraft): Promise<CreateConfig> {
 	const prompts = await import("@clack/prompts");
-	const pc = require("picocolors");
 
 	prompts.intro(pc.bgCyan(pc.black(" create-typescript-express ")));
 
 	let projectPath = config.projectPath;
 	if (!projectPath) {
-		projectPath = await prompts.text({
+		const answer = await prompts.text({
 			message: "What is your project named?",
 			placeholder: "my-api",
 			validate(value) {
-				if (!value.trim()) {
+				if (!value?.trim()) {
 					return "Project name is required.";
 				}
 			}
 		});
-	}
 
-	if (prompts.isCancel(projectPath)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		if (prompts.isCancel(answer)) {
+			cancel(prompts);
+		}
+
+		projectPath = answer;
 	}
 
 	const mode = await prompts.select({
@@ -157,8 +194,7 @@ async function promptForConfig(config) {
 	});
 
 	if (prompts.isCancel(mode)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
 	if (mode === "recommended") {
@@ -182,15 +218,17 @@ async function promptForConfig(config) {
 	};
 }
 
-async function promptImportAlias(prompts, currentAlias) {
+async function promptImportAlias(
+	prompts: Prompts,
+	currentAlias: string | false
+): Promise<string | false> {
 	const customizeAlias = await prompts.confirm({
 		message: "Would you like to customize the import alias?",
 		initialValue: currentAlias !== DEFAULT_IMPORT_ALIAS
 	});
 
 	if (prompts.isCancel(customizeAlias)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
 	if (!customizeAlias) {
@@ -210,14 +248,13 @@ async function promptImportAlias(prompts, currentAlias) {
 	});
 
 	if (prompts.isCancel(alias)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
 	return validateImportAlias(alias);
 }
 
-async function promptToggles(prompts, config) {
+async function promptToggles(prompts: Prompts, config: CreateConfigDraft) {
 	const selected = await prompts.multiselect({
 		message: "Which built-in template pieces would you like to include?",
 		required: false,
@@ -228,7 +265,7 @@ async function promptToggles(prompts, config) {
 			config.dotenv && "dotenv",
 			config.docker && "docker",
 			config.ci && "ci"
-		].filter(Boolean),
+		].filter(Boolean) as string[],
 		options: [
 			{ value: "views", label: "Pug views" },
 			{ value: "logging", label: "Request logging" },
@@ -240,8 +277,7 @@ async function promptToggles(prompts, config) {
 	});
 
 	if (prompts.isCancel(selected)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
 	return {
@@ -254,7 +290,7 @@ async function promptToggles(prompts, config) {
 	};
 }
 
-async function promptFeatures(prompts, currentFeatures) {
+async function promptFeatures(prompts: Prompts, currentFeatures: FeatureName[]) {
 	const selected = await prompts.multiselect({
 		message: "Which optional feature groups would you like to add?",
 		required: false,
@@ -267,14 +303,16 @@ async function promptFeatures(prompts, currentFeatures) {
 	});
 
 	if (prompts.isCancel(selected)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
-	return selected;
+	return selected as FeatureName[];
 }
 
-async function promptPackageManager(prompts, currentPackageManager) {
+async function promptPackageManager(
+	prompts: Prompts,
+	currentPackageManager: PackageManager
+): Promise<PackageManager> {
 	const selected = await prompts.select({
 		message: "Which package manager would you like to use?",
 		initialValue: currentPackageManager,
@@ -285,33 +323,27 @@ async function promptPackageManager(prompts, currentPackageManager) {
 	});
 
 	if (prompts.isCancel(selected)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
-	return selected;
+	return selected as PackageManager;
 }
 
-async function promptInstall(prompts, currentInstall) {
+async function promptInstall(prompts: Prompts, currentInstall: boolean) {
 	const install = await prompts.confirm({
 		message: "Install dependencies now?",
 		initialValue: currentInstall
 	});
 
 	if (prompts.isCancel(install)) {
-		prompts.cancel("Project creation cancelled.");
-		process.exit(1);
+		cancel(prompts);
 	}
 
 	return install;
 }
 
-function capitalize(value) {
-	return value[0].toUpperCase() + value.slice(1);
+function cancel(prompts: Prompts): never {
+	prompts.cancel("Project creation cancelled.");
+	process.exit(1);
+	throw new Error("Project creation cancelled.");
 }
-
-module.exports = {
-	detectPackageManager,
-	resolveConfig,
-	validateImportAlias
-};

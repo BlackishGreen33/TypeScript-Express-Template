@@ -1,4 +1,5 @@
 dist
+dist-cli
 node_modules
 template/node_modules
 template/dist

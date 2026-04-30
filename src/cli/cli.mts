@@ -1,18 +1,34 @@
-const { Command } = require("commander");
-const pc = require("picocolors");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const packageJson = require("../../package.json");
-const { supportedFeatures } = require("./constants");
-const { createProject } = require("./generator");
-const { resolveConfig } = require("./prompts");
+import { Command } from "commander";
+import pc from "picocolors";
 
-async function main(argv) {
+import { supportedFeatures } from "./constants.mjs";
+import { createProject } from "./generator.mjs";
+import { readJson } from "./filesystem.mjs";
+import { resolveConfig } from "./prompts.mjs";
+import type { CreateConfig, PackageJson, PackageManager } from "./types.mjs";
+
+interface Spinner {
+	start(message: string): void;
+	stop(message?: string): void;
+}
+
+const runtimeDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir =
+	path.basename(runtimeDir) === "dist-cli"
+		? path.resolve(runtimeDir, "..")
+		: path.resolve(runtimeDir, "../..");
+const packageJson = readJson<PackageJson>(path.join(rootDir, "package.json"));
+
+export async function main(argv: string[]) {
 	const program = new Command();
 
 	program
 		.name("create-typescript-express")
 		.description("Create a lightweight Express 5 application with TypeScript.")
-		.version(packageJson.version, "-v, --version", "Show the package version")
+		.version(packageJson.version || "0.0.0", "-v, --version", "Show the package version")
 		.argument("[project-name]", "Project directory to create")
 		.option("-y, --yes", "Use recommended defaults without prompts")
 		.option("--import-alias <alias>", "Configure a TypeScript import alias, for example @/*")
@@ -46,7 +62,7 @@ Examples:
 
 	const config = await resolveConfig(program.args[0], program.opts(), { argv });
 	const prompts = await maybeLoadPrompts();
-	let spinner;
+	let spinner: Spinner | undefined;
 
 	const result = createProject(config, {
 		onInstallStart(packageManager) {
@@ -71,7 +87,10 @@ async function maybeLoadPrompts() {
 	return import("@clack/prompts");
 }
 
-function printSuccess(result, config) {
+function printSuccess(
+	result: { projectName: string; relativeTarget: string; lockfileRemoved: boolean },
+	config: CreateConfig
+) {
 	const cdCommand = result.relativeTarget === "." ? "" : `  cd ${result.relativeTarget}\n`;
 	const installCommand = config.install ? "" : `  ${installCommandFor(config.packageManager)}\n`;
 	const featureText = config.features.length > 0 ? config.features.join(", ") : "none";
@@ -97,14 +116,10 @@ function printSuccess(result, config) {
 	console.log(`${cdCommand}${installCommand}  ${config.packageManager} run dev`);
 }
 
-function installCommandFor(packageManager) {
+function installCommandFor(packageManager: PackageManager) {
 	if (packageManager === "npm") {
 		return "npm install";
 	}
 
 	return `${packageManager} install`;
 }
-
-module.exports = {
-	main
-};

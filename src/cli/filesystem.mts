@@ -1,10 +1,10 @@
-const fs = require("node:fs");
-const path = require("node:path");
+import fs from "node:fs";
+import path from "node:path";
 
 const ignoredTemplateEntries = new Set(["node_modules", "dist", ".tmp"]);
 const renameFiles = new Map([["_gitignore", ".gitignore"]]);
 
-function assertUsableTarget(targetDir) {
+export function assertUsableTarget(targetDir: string) {
 	if (!fs.existsSync(targetDir)) {
 		return;
 	}
@@ -15,7 +15,7 @@ function assertUsableTarget(targetDir) {
 	}
 }
 
-function copyTemplate(sourceDir, targetDir) {
+export function copyTemplate(sourceDir: string, targetDir: string) {
 	fs.mkdirSync(targetDir, { recursive: true });
 
 	for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
@@ -36,28 +36,28 @@ function copyTemplate(sourceDir, targetDir) {
 	}
 }
 
-function readJson(filePath) {
-	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+export function readJson<T>(filePath: string): T {
+	return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
 }
 
-function writeJson(filePath, data) {
+export function writeJson(filePath: string, data: unknown) {
 	fs.writeFileSync(filePath, `${JSON.stringify(data, null, "\t")}\n`);
 }
 
-function readText(filePath) {
+export function readText(filePath: string) {
 	return fs.readFileSync(filePath, "utf8");
 }
 
-function writeText(filePath, text) {
+export function writeText(filePath: string, text: string) {
 	fs.mkdirSync(path.dirname(filePath), { recursive: true });
 	fs.writeFileSync(filePath, text);
 }
 
-function removePath(targetDir, relativePath) {
+export function removePath(targetDir: string, relativePath: string) {
 	fs.rmSync(path.join(targetDir, relativePath), { recursive: true, force: true });
 }
 
-function updateTextFile(filePath, updater) {
+export function updateTextFile(filePath: string, updater: (text: string) => string) {
 	const current = readText(filePath);
 	const next = updater(current);
 
@@ -66,7 +66,13 @@ function updateTextFile(filePath, updater) {
 	}
 }
 
-function copySnippet(snippetsDir, targetDir, snippetPath, outputPath, replacements = {}) {
+export function copySnippet(
+	snippetsDir: string,
+	targetDir: string,
+	snippetPath: string,
+	outputPath: string,
+	replacements: Record<string, string> = {}
+) {
 	let text = readText(path.join(snippetsDir, snippetPath));
 
 	for (const [token, value] of Object.entries(replacements)) {
@@ -75,15 +81,3 @@ function copySnippet(snippetsDir, targetDir, snippetPath, outputPath, replacemen
 
 	writeText(path.join(targetDir, outputPath), text);
 }
-
-module.exports = {
-	assertUsableTarget,
-	copySnippet,
-	copyTemplate,
-	readJson,
-	readText,
-	removePath,
-	updateTextFile,
-	writeJson,
-	writeText
-};

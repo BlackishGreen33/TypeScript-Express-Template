@@ -12,14 +12,14 @@
 		"dev": "tsx watch --clear-screen=false bin/server.ts",
 		"start": "node dist/bin/server.js",
 		"copy-static": "tsx copyStatic.ts",
-		"ts-build": "tsc",
+		"ts-build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml,css}\"",
 		"format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml,css}\"",
 		"build": "npm run ts-build && tsc-alias && npm run copy-static",
-		"test": "npm run build && node --test test/*.test.js",
+		"test": "npm run build && tsx --test test/*.test.ts",
 		"check": "npm run typecheck && npm run lint && npm run format:check && npm test"
 	},
 	"dependencies": {

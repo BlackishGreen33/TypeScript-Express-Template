@@ -1,6 +1,14 @@
-const DEFAULT_IMPORT_ALIAS = "@/*";
+import type {
+	FeatureDefinition,
+	FeatureName,
+	PackageManager,
+	TemplateToggle,
+	TogglePackages
+} from "./types.mjs";
 
-const featureDefinitions = {
+export const DEFAULT_IMPORT_ALIAS = "@/*";
+
+export const featureDefinitions: Record<FeatureName, FeatureDefinition> = {
 	security: {
 		label: "Security middleware",
 		hint: "helmet, cors, compression, express-rate-limit",
@@ -53,10 +61,15 @@ const featureDefinitions = {
 	}
 };
 
-const supportedFeatures = Object.keys(featureDefinitions);
-const supportedPackageManagers = ["npm", "pnpm", "yarn", "bun"];
+export const supportedFeatures = Object.keys(featureDefinitions) as FeatureName[];
+export const supportedPackageManagers = [
+	"npm",
+	"pnpm",
+	"yarn",
+	"bun"
+] as const satisfies readonly PackageManager[];
 
-const togglePackages = {
+export const togglePackages: Record<TemplateToggle, TogglePackages> = {
 	views: {
 		dependencies: ["pug"]
 	},
@@ -71,12 +84,4 @@ const togglePackages = {
 	dotenv: {
 		dependencies: ["dotenv"]
 	}
-};
-
-module.exports = {
-	DEFAULT_IMPORT_ALIAS,
-	featureDefinitions,
-	supportedFeatures,
-	supportedPackageManagers,
-	togglePackages
 };

@@ -1,10 +1,12 @@
-const assert = require("node:assert/strict");
-const test = require("node:test");
-const request = require("supertest");
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import request from "supertest";
 
 process.env.NODE_ENV = "production";
 
-const app = require("../dist/app").default;
+// Load the app after NODE_ENV is set so Express initializes in production mode.
+const app = require("../app").default;
 
 test("GET / returns the template greeting", async () => {
 	const response = await request(app).get("/").expect(200);

@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-cli
 template/node_modules
 template/dist
 .tmp

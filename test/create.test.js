@@ -8,7 +8,7 @@ const test = require("node:test");
 const packageJson = require("../package.json");
 
 const rootDir = path.resolve(__dirname, "..");
-const cliPath = path.join(rootDir, "bin/create-typescript-express.js");
+const cliPath = path.join(rootDir, packageJson.bin["create-typescript-express"]);
 
 function runCli(args) {
 	return spawnSync(process.execPath, [cliPath, ...args], {
@@ -272,7 +272,7 @@ test("generates validation routes with JSON errors when views are disabled", () 
 	assert.match(app, /res\.status\(status\)\.json/);
 	assert.doesNotMatch(app, /res\.render\("error"\)/);
 
-	const appTest = fs.readFileSync(path.join(targetDir, "test/app.test.js"), "utf8");
+	const appTest = fs.readFileSync(path.join(targetDir, "test/app.test.ts"), "utf8");
 	assert.match(appTest, /POST \/echo validates the request body/);
 	assert.match(appTest, /GET \/not-found returns a JSON 404/);
 

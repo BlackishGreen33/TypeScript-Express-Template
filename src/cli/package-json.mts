@@ -1,3 +1,5 @@
+import type { DependencyMap, PackageJson } from "./types.mjs";
+
 const packageShapeKeys = [
 	"scripts",
 	"dependencies",
@@ -5,20 +7,28 @@ const packageShapeKeys = [
 	"optionalDependencies",
 	"peerDependencies",
 	"overrides"
-];
+] as const;
 
-function sortObject(value) {
+export function sortObject(value: DependencyMap = {}): DependencyMap {
 	return Object.fromEntries(
-		Object.entries(value || {}).sort(([left], [right]) => left.localeCompare(right))
+		Object.entries(value).sort(([left], [right]) => left.localeCompare(right))
 	);
 }
 
-function addPackages(packageJson, section, packages = {}) {
+export function addPackages(
+	packageJson: PackageJson,
+	section: "dependencies" | "devDependencies",
+	packages: DependencyMap = {}
+) {
 	const current = packageJson[section] || {};
 	packageJson[section] = sortObject({ ...current, ...packages });
 }
 
-function removePackages(packageJson, section, packages = []) {
+export function removePackages(
+	packageJson: PackageJson,
+	section: "dependencies" | "devDependencies",
+	packages: string[] = []
+) {
 	if (!packageJson[section]) {
 		return;
 	}
@@ -35,8 +45,8 @@ function removePackages(packageJson, section, packages = []) {
 	packageJson[section] = sortObject(packageJson[section]);
 }
 
-function packageShape(packageJson) {
-	const shape = {};
+function packageShape(packageJson: PackageJson) {
+	const shape: Record<string, unknown> = {};
 
 	for (const key of packageShapeKeys) {
 		shape[key] = packageJson[key] || {};
@@ -45,13 +55,6 @@ function packageShape(packageJson) {
 	return JSON.stringify(shape);
 }
 
-function hasInstallShapeChanged(before, after) {
+export function hasInstallShapeChanged(before: PackageJson, after: PackageJson) {
 	return packageShape(before) !== packageShape(after);
 }
-
-module.exports = {
-	addPackages,
-	hasInstallShapeChanged,
-	removePackages,
-	sortObject
-};

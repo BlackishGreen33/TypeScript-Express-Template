@@ -1,8 +1,9 @@
-const { spawnSync } = require("node:child_process");
-const path = require("node:path");
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const { DEFAULT_IMPORT_ALIAS, featureDefinitions, togglePackages } = require("./constants");
-const {
+import { DEFAULT_IMPORT_ALIAS, featureDefinitions, togglePackages } from "./constants.mjs";
+import {
 	assertUsableTarget,
 	copySnippet,
 	copyTemplate,
@@ -10,14 +11,32 @@ const {
 	removePath,
 	updateTextFile,
 	writeJson
-} = require("./filesystem");
-const { addPackages, hasInstallShapeChanged, removePackages } = require("./package-json");
+} from "./filesystem.mjs";
+import { addPackages, hasInstallShapeChanged, removePackages } from "./package-json.mjs";
+import type { CreateConfig, CreateResult, GeneratorLifecycle, PackageJson } from "./types.mjs";
 
-const rootDir = path.resolve(__dirname, "../..");
+interface TsConfig {
+	compilerOptions: {
+		baseUrl?: string;
+		paths?: Record<string, string[]>;
+		ignoreDeprecations?: string;
+		[key: string]: unknown;
+	};
+	[key: string]: unknown;
+}
+
+const runtimeDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir =
+	path.basename(runtimeDir) === "dist-cli"
+		? path.resolve(runtimeDir, "..")
+		: path.resolve(runtimeDir, "../..");
 const templateDir = path.join(rootDir, "template");
 const snippetsDir = path.join(rootDir, "bin/snippets");
 
-function createProject(config, lifecycle = {}) {
+export function createProject(
+	config: CreateConfig,
+	lifecycle: GeneratorLifecycle = {}
+): CreateResult {
 	const targetDir = path.resolve(process.cwd(), config.projectPath);
 	const projectName = toPackageName(path.basename(targetDir));
 
@@ -28,8 +47,8 @@ function createProject(config, lifecycle = {}) {
 	assertUsableTarget(targetDir);
 	copyTemplate(templateDir, targetDir);
 
-	const templatePackage = readJson(path.join(templateDir, "package.json"));
-	const generatedPackage = readJson(path.join(targetDir, "package.json"));
+	const templatePackage = readJson<PackageJson>(path.join(templateDir, "package.json"));
+	const generatedPackage = readJson<PackageJson>(path.join(targetDir, "package.json"));
 
 	generatedPackage.name = projectName;
 	generatedPackage.version = "0.1.0";
@@ -61,7 +80,7 @@ function createProject(config, lifecycle = {}) {
 	};
 }
 
-function toPackageName(name) {
+export function toPackageName(name: string) {
 	return name
 		.trim()
 		.toLowerCase()
@@ -70,28 +89,33 @@ function toPackageName(name) {
 		.replace(/^-+|-+$/g, "");
 }
 
-function isValidPackageName(name) {
+export function isValidPackageName(name: string) {
 	return /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(name);
 }
 
-function updateGeneratedPackageLock(targetDir, packageName) {
+function updateGeneratedPackageLock(targetDir: string, packageName: string) {
 	const lockPath = path.join(targetDir, "package-lock.json");
-	const generatedLock = readJson(lockPath);
+	const generatedLock = readJson<PackageJson>(lockPath);
 
 	generatedLock.name = packageName;
 	generatedLock.version = "0.1.0";
 
-	if (generatedLock.packages && generatedLock.packages[""]) {
-		generatedLock.packages[""].name = packageName;
-		generatedLock.packages[""].version = "0.1.0";
+	const packages = generatedLock.packages;
+	if (isPackageLockPackages(packages) && packages[""]) {
+		packages[""].name = packageName;
+		packages[""].version = "0.1.0";
 	}
 
 	writeJson(lockPath, generatedLock);
 }
 
-function applyToggles(targetDir, packageJson, config) {
+function isPackageLockPackages(value: unknown): value is Record<string, PackageJson> {
+	return typeof value === "object" && value !== null;
+}
+
+function applyToggles(targetDir: string, packageJson: PackageJson, config: CreateConfig) {
 	for (const [toggle, packages] of Object.entries(togglePackages)) {
-		if (config[toggle]) {
+		if (config[toggle as keyof typeof togglePackages]) {
 			continue;
 		}
 
@@ -125,7 +149,7 @@ function applyToggles(targetDir, packageJson, config) {
 	}
 }
 
-function applyFeatures(targetDir, packageJson, config) {
+function applyFeatures(targetDir: string, packageJson: PackageJson, config: CreateConfig) {
 	for (const featureName of config.features) {
 		const feature = featureDefinitions[featureName];
 		addPackages(packageJson, "dependencies", feature.dependencies);
@@ -153,9 +177,9 @@ function applyFeatures(targetDir, packageJson, config) {
 	}
 }
 
-function applyAlias(targetDir, packageJson, alias) {
+function applyAlias(targetDir: string, packageJson: PackageJson, alias: string | false) {
 	const tsconfigPath = path.join(targetDir, "tsconfig.json");
-	const tsconfig = readJson(tsconfigPath);
+	const tsconfig = readJson<TsConfig>(tsconfigPath);
 
 	if (alias === false) {
 		delete tsconfig.compilerOptions.baseUrl;
@@ -191,7 +215,7 @@ function applyAlias(targetDir, packageJson, alias) {
 	writeTsconfig(tsconfigPath, tsconfig);
 }
 
-function writeTsconfig(tsconfigPath, tsconfig) {
+function writeTsconfig(tsconfigPath: string, tsconfig: TsConfig) {
 	writeJson(tsconfigPath, tsconfig);
 	updateTextFile(tsconfigPath, (text) =>
 		text
@@ -200,11 +224,11 @@ function writeTsconfig(tsconfigPath, tsconfig) {
 	);
 }
 
-function aliasToPrefix(alias) {
+function aliasToPrefix(alias: string) {
 	return alias.replace(/\*$/, "");
 }
 
-function replaceDefaultAliasImports(targetDir, replacements) {
+function replaceDefaultAliasImports(targetDir: string, replacements: Record<string, string>) {
 	const files = [
 		"app.ts",
 		"bin/server.ts",
@@ -225,14 +249,18 @@ function replaceDefaultAliasImports(targetDir, replacements) {
 				return next;
 			});
 		} catch (error) {
-			if (error.code !== "ENOENT") {
+			if (!isNodeError(error) || error.code !== "ENOENT") {
 				throw error;
 			}
 		}
 	}
 }
 
-function disableViews(targetDir) {
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+	return error instanceof Error;
+}
+
+function disableViews(targetDir: string) {
 	removePath(targetDir, "views");
 	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
 		text
@@ -263,7 +291,7 @@ function disableViews(targetDir) {
 `
 			)
 	);
-	updateTextFile(path.join(targetDir, "test/app.test.js"), (text) =>
+	updateTextFile(path.join(targetDir, "test/app.test.ts"), (text) =>
 		text.replace(
 			`test("GET /not-found uses the app error view without a stack trace", async () => {
 \tconst response = await request(app).get("/not-found").expect(404);
@@ -284,7 +312,7 @@ function disableViews(targetDir) {
 	);
 }
 
-function disableLogging(targetDir) {
+function disableLogging(targetDir: string) {
 	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
 		text.replace('import logger from "morgan";\n', "").replace('app.use(logger("dev"));\n', "")
 	);
@@ -305,7 +333,7 @@ function onListening() {
 	);
 }
 
-function disableCookies(targetDir) {
+function disableCookies(targetDir: string) {
 	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
 		text
 			.replace('import cookieParser from "cookie-parser";\n', "")
@@ -313,7 +341,7 @@ function disableCookies(targetDir) {
 	);
 }
 
-function disableDotenv(targetDir) {
+function disableDotenv(targetDir: string) {
 	removePath(targetDir, ".env.example");
 	updateTextFile(path.join(targetDir, "bin/server.ts"), (text) =>
 		text
@@ -322,7 +350,7 @@ function disableDotenv(targetDir) {
 	);
 }
 
-function addSecurity(targetDir) {
+function addSecurity(targetDir: string) {
 	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
 		insertAfter(
 			text.replace(
@@ -345,7 +373,7 @@ app.use(
 	);
 }
 
-function addValidation(targetDir) {
+function addValidation(targetDir: string) {
 	copySnippet(snippetsDir, targetDir, "validation/validateBody.ts", "middleware/validateBody.ts");
 	copySnippet(snippetsDir, targetDir, "validation/echo.ts", "routes/handlers/modules/echo.ts");
 	updateTextFile(path.join(targetDir, "routes/handlers/index.ts"), (text) =>
@@ -373,7 +401,7 @@ function addValidation(targetDir) {
 \t}`
 		)
 	);
-	updateTextFile(path.join(targetDir, "test/app.test.js"), (text) =>
+	updateTextFile(path.join(targetDir, "test/app.test.ts"), (text) =>
 		insertAfter(
 			text,
 			`test("GET /health returns a JSON health response", async () => {
@@ -395,7 +423,7 @@ test("POST /echo validates the request body", async () => {
 	);
 }
 
-function addOpenApi(targetDir) {
+function addOpenApi(targetDir: string) {
 	copySnippet(snippetsDir, targetDir, "openapi/openapi.ts", "openapi.ts");
 	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
 		insertAfter(
@@ -417,7 +445,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 `
 		)
 	);
-	updateTextFile(path.join(targetDir, "test/app.test.js"), (text) =>
+	updateTextFile(path.join(targetDir, "test/app.test.ts"), (text) =>
 		insertAfter(
 			text,
 			`test("GET /health returns a JSON health response", async () => {
@@ -439,7 +467,7 @@ test("GET /openapi.json returns the generated OpenAPI document", async () => {
 	);
 }
 
-function addPrisma(targetDir, packageJson) {
+function addPrisma(targetDir: string, packageJson: PackageJson) {
 	copySnippet(snippetsDir, targetDir, "prisma/schema.prisma", "prisma/schema.prisma");
 	copySnippet(snippetsDir, targetDir, "prisma/prisma.ts", "lib/prisma.ts");
 	copySnippet(snippetsDir, targetDir, "prisma/prisma.config.ts", "prisma.config.ts");
@@ -454,11 +482,11 @@ function addPrisma(targetDir, packageJson) {
 	packageJson.scripts["prisma:migrate"] = "prisma migrate dev";
 }
 
-function addAuth(targetDir) {
+function addAuth(targetDir: string) {
 	copySnippet(snippetsDir, targetDir, "auth/auth.ts", "middleware/auth.ts");
 }
 
-function insertAfter(text, marker, addition) {
+function insertAfter(text: string, marker: string, addition: string) {
 	if (text.includes(addition.trim())) {
 		return text;
 	}
@@ -470,7 +498,7 @@ function insertAfter(text, marker, addition) {
 	return text.replace(marker, `${marker}${addition}`);
 }
 
-function insertRoute(text, routeText) {
+function insertRoute(text: string, routeText: string) {
 	if (text.includes('path: "/echo"')) {
 		return text;
 	}
@@ -492,7 +520,7 @@ function insertRoute(text, routeText) {
 	);
 }
 
-function writeSelectedOptions(targetDir, config) {
+function writeSelectedOptions(targetDir: string, config: CreateConfig) {
 	const readmes = [
 		{
 			fileName: "README.md",
@@ -548,7 +576,7 @@ function writeSelectedOptions(targetDir, config) {
 	}
 }
 
-function appendIgnoreEntry(targetDir, fileName, entry) {
+function appendIgnoreEntry(targetDir: string, fileName: string, entry: string) {
 	updateTextFile(path.join(targetDir, fileName), (text) => {
 		if (text.split(/\r?\n/).includes(entry)) {
 			return text;
@@ -558,7 +586,11 @@ function appendIgnoreEntry(targetDir, fileName, entry) {
 	});
 }
 
-function installDependencies(targetDir, packageManager, lifecycle) {
+function installDependencies(
+	targetDir: string,
+	packageManager: CreateConfig["packageManager"],
+	lifecycle: GeneratorLifecycle
+) {
 	const command = packageManager;
 	const args = packageManager === "yarn" ? ["install"] : ["install"];
 	lifecycle.onInstallStart?.(packageManager);
@@ -578,9 +610,3 @@ function installDependencies(targetDir, packageManager, lifecycle) {
 
 	lifecycle.onInstallEnd?.();
 }
-
-module.exports = {
-	createProject,
-	isValidPackageName,
-	toPackageName
-};

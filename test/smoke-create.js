@@ -3,7 +3,10 @@ const fs = require("node:fs");
 const net = require("node:net");
 const path = require("node:path");
 
+const packageJson = require("../package.json");
+
 const rootDir = path.resolve(__dirname, "..");
+const cliPath = path.join(rootDir, packageJson.bin["create-typescript-express"]);
 const targetDir = path.join(rootDir, ".tmp", "smoke-app");
 const featureTargetDir = path.join(rootDir, ".tmp", "smoke-app-features");
 
@@ -88,12 +91,7 @@ async function main() {
 		fs.rmSync(featureTargetDir, { recursive: true, force: true });
 		fs.mkdirSync(path.dirname(targetDir), { recursive: true });
 
-		run(process.execPath, [
-			path.join(rootDir, "bin/create-typescript-express.js"),
-			targetDir,
-			"--yes",
-			"--skip-install"
-		]);
+		run(process.execPath, [cliPath, targetDir, "--yes", "--skip-install"]);
 		run("npm", ["ci"], { cwd: targetDir });
 		run("npm", ["run", "check"], { cwd: targetDir });
 
@@ -107,7 +105,7 @@ async function main() {
 		await waitForHealth(port);
 
 		run(process.execPath, [
-			path.join(rootDir, "bin/create-typescript-express.js"),
+			cliPath,
 			featureTargetDir,
 			"--yes",
 			"--features",
