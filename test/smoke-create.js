@@ -116,6 +116,7 @@ async function main() {
 		]);
 		run("npm", ["install"], { cwd: featureTargetDir });
 		run("npm", ["run", "check"], { cwd: featureTargetDir });
+		run("npm", ["audit", "--omit", "dev"], { cwd: featureTargetDir });
 	} finally {
 		if (serverProcess) {
 			await stopProcess(serverProcess);

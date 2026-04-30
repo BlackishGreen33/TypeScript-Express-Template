@@ -1,3 +1,4 @@
+const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
 const net = require("node:net");
 const path = require("node:path");
@@ -70,6 +71,40 @@ async function waitForHealth(port) {
 	throw lastError || new Error(`Timed out waiting for ${url}`);
 }
 
+async function assertTextResponse(port, requestPath, status, assertBody) {
+	const response = await fetch(`http://127.0.0.1:${port}${requestPath}`);
+	const text = await response.text();
+
+	assert.equal(response.status, status);
+	assertBody(text);
+}
+
+async function waitForContainerHealth() {
+	const deadline = Date.now() + 70000;
+	let lastStatus;
+
+	while (Date.now() < deadline) {
+		try {
+			lastStatus = run("docker", [
+				"inspect",
+				"--format",
+				"{{.State.Health.Status}}",
+				containerName
+			]);
+
+			if (lastStatus === "healthy") {
+				return;
+			}
+		} catch (error) {
+			lastStatus = error instanceof Error ? error.message : String(error);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	throw new Error(`Container did not become healthy. Last status: ${lastStatus || "unknown"}`);
+}
+
 async function main() {
 	const port = await getFreePort();
 
@@ -89,6 +124,15 @@ async function main() {
 		]);
 
 		await waitForHealth(port);
+		await assertTextResponse(port, "/", 200, (text) => {
+			assert.equal(text, "Hello World!");
+		});
+		await assertTextResponse(port, "/not-found", 404, (text) => {
+			assert.match(text, /<h1>Not Found<\/h1>/);
+			assert.match(text, /<h2>404<\/h2>/);
+			assert.doesNotMatch(text, /NotFoundError|app\.ts|node_modules/);
+		});
+		await waitForContainerHealth();
 	} finally {
 		cleanup("docker", ["rm", "-f", containerName]);
 		cleanup("docker", ["image", "rm", "-f", imageTag]);

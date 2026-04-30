@@ -1,4 +1,4 @@
-import { Request, Response, RequestHandler as Middleware } from "express";
+import { RequestHandler } from "express";
 
 type Method =
 	| "get"
@@ -11,11 +11,11 @@ type Method =
 	| "trace"
 	| "patch";
 
-export type HandlerType = (req: Request, res: Response) => any;
-
 export type RouteType = {
 	method: Method;
 	path: string;
-	middleware: Middleware[];
-	handler: HandlerType;
+	middleware: RequestHandler[];
+	handler: RequestHandler;
 };
+
+export type HandlerType = RequestHandler;

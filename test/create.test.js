@@ -67,6 +67,9 @@ test("creates a project from the bundled template", () => {
 	assert.ok(fs.existsSync(path.join(targetDir, "README.md")));
 	assert.ok(fs.existsSync(path.join(targetDir, "README.zh-TW.md")));
 	assert.ok(fs.existsSync(path.join(targetDir, "README.zh-CN.md")));
+	assert.match(fs.readFileSync(path.join(targetDir, "README.md"), "utf8"), /## Selected Options/);
+	assert.match(fs.readFileSync(path.join(targetDir, "README.zh-TW.md"), "utf8"), /## 已選選項/);
+	assert.match(fs.readFileSync(path.join(targetDir, "README.zh-CN.md"), "utf8"), /## 已选选项/);
 
 	const generatedPackage = JSON.parse(
 		fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
@@ -136,6 +139,14 @@ test("generates selected feature groups without a stale npm lockfile", () => {
 		fs.readFileSync(path.join(targetDir, "README.md"), "utf8"),
 		/Optional features: security, validation, openapi, prisma, auth/
 	);
+	assert.match(
+		fs.readFileSync(path.join(targetDir, "README.zh-TW.md"), "utf8"),
+		/選用功能: security, validation, openapi, prisma, auth/
+	);
+	assert.match(
+		fs.readFileSync(path.join(targetDir, "README.zh-CN.md"), "utf8"),
+		/可选功能: security, validation, openapi, prisma, auth/
+	);
 
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });
@@ -204,6 +215,100 @@ test("can remove built-in template pieces and disable import alias", () => {
 		fs.readFileSync(path.join(targetDir, "routes/index.ts"), "utf8"),
 		/from "\.\.\/types"/
 	);
+
+	fs.rmSync(tempDir, { recursive: true, force: true });
+});
+
+test("generates validation and openapi without import alias", () => {
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-typescript-express-"));
+	const targetDir = path.join(tempDir, "plain-feature-api");
+
+	const result = runCreate(targetDir, ["--features", "validation,openapi", "--no-import-alias"]);
+
+	assert.equal(result.status, 0, result.stderr || result.stdout);
+
+	const generatedPackage = JSON.parse(
+		fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+	);
+	assert.equal(generatedPackage.dependencies.zod, "^4.3.6");
+	assert.equal(generatedPackage.dependencies["swagger-ui-express"], "^5.0.1");
+	assert.equal(generatedPackage.devDependencies["tsc-alias"], undefined);
+
+	const app = fs.readFileSync(path.join(targetDir, "app.ts"), "utf8");
+	assert.match(app, /from "\.\/routes"/);
+	assert.match(app, /from "\.\/openapi"/);
+	assert.doesNotMatch(app, /@\//);
+
+	const routes = fs.readFileSync(path.join(targetDir, "routes/index.ts"), "utf8");
+	assert.match(routes, /from "\.\/handlers"/);
+	assert.match(routes, /from "\.\.\/types"/);
+	assert.match(routes, /from "\.\.\/middleware\/validateBody"/);
+	assert.doesNotMatch(routes, /@\//);
+
+	assert.match(
+		fs.readFileSync(path.join(targetDir, "README.md"), "utf8"),
+		/Import alias: `disabled`/
+	);
+
+	fs.rmSync(tempDir, { recursive: true, force: true });
+});
+
+test("generates validation routes with JSON errors when views are disabled", () => {
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-typescript-express-"));
+	const targetDir = path.join(tempDir, "json-validation-api");
+
+	const result = runCreate(targetDir, ["--features", "validation", "--no-views"]);
+
+	assert.equal(result.status, 0, result.stderr || result.stdout);
+	assert.ok(!fs.existsSync(path.join(targetDir, "views")));
+
+	const generatedPackage = JSON.parse(
+		fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+	);
+	assert.equal(generatedPackage.dependencies.pug, undefined);
+	assert.equal(generatedPackage.dependencies.zod, "^4.3.6");
+
+	const app = fs.readFileSync(path.join(targetDir, "app.ts"), "utf8");
+	assert.match(app, /res\.status\(status\)\.json/);
+	assert.doesNotMatch(app, /res\.render\("error"\)/);
+
+	const appTest = fs.readFileSync(path.join(targetDir, "test/app.test.js"), "utf8");
+	assert.match(appTest, /POST \/echo validates the request body/);
+	assert.match(appTest, /GET \/not-found returns a JSON 404/);
+
+	fs.rmSync(tempDir, { recursive: true, force: true });
+});
+
+test("generates auth helper while trimming logging cookies and dotenv", () => {
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-typescript-express-"));
+	const targetDir = path.join(tempDir, "auth-lite-api");
+
+	const result = runCreate(targetDir, [
+		"--features",
+		"auth",
+		"--no-logging",
+		"--no-cookies",
+		"--no-dotenv"
+	]);
+
+	assert.equal(result.status, 0, result.stderr || result.stdout);
+	assert.ok(fs.existsSync(path.join(targetDir, "middleware/auth.ts")));
+	assert.ok(!fs.existsSync(path.join(targetDir, ".env.example")));
+
+	const generatedPackage = JSON.parse(
+		fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+	);
+	assert.equal(generatedPackage.dependencies.jose, "^6.2.3");
+	assert.equal(generatedPackage.dependencies.debug, undefined);
+	assert.equal(generatedPackage.dependencies.morgan, undefined);
+	assert.equal(generatedPackage.dependencies["cookie-parser"], undefined);
+	assert.equal(generatedPackage.dependencies.dotenv, undefined);
+
+	const app = fs.readFileSync(path.join(targetDir, "app.ts"), "utf8");
+	assert.doesNotMatch(app, /cookieParser|logger\("dev"\)/);
+
+	const server = fs.readFileSync(path.join(targetDir, "bin/server.ts"), "utf8");
+	assert.doesNotMatch(server, /dotenv|debug|server\.on\("listening"/);
 
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });

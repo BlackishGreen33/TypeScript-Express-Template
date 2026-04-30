@@ -493,22 +493,59 @@ function insertRoute(text, routeText) {
 }
 
 function writeSelectedOptions(targetDir, config) {
-	const featureText = config.features.length > 0 ? config.features.join(", ") : "none";
-	const aliasText = config.importAlias === false ? "disabled" : config.importAlias;
-	const section = `## Selected Options
+	const readmes = [
+		{
+			fileName: "README.md",
+			heading: "## Selected Options",
+			anchor: "## Getting Started\n",
+			aliasLabel: "Import alias",
+			featuresLabel: "Optional features",
+			disabledText: "disabled",
+			noneText: "none"
+		},
+		{
+			fileName: "README.zh-TW.md",
+			heading: "## 已選選項",
+			anchor: "## 開始使用\n",
+			aliasLabel: "Import alias",
+			featuresLabel: "選用功能",
+			disabledText: "停用",
+			noneText: "無"
+		},
+		{
+			fileName: "README.zh-CN.md",
+			heading: "## 已选选项",
+			anchor: "## 开始使用\n",
+			aliasLabel: "Import alias",
+			featuresLabel: "可选功能",
+			disabledText: "已禁用",
+			noneText: "无"
+		}
+	];
 
-- Import alias: \`${aliasText}\`
-- Optional features: ${featureText}
+	for (const readme of readmes) {
+		const featureText =
+			config.features.length > 0 ? config.features.join(", ") : readme.noneText;
+		const aliasText = config.importAlias === false ? readme.disabledText : config.importAlias;
+		const section = `${readme.heading}
+
+- ${readme.aliasLabel}: \`${aliasText}\`
+- ${readme.featuresLabel}: ${featureText}
 
 `;
 
-	updateTextFile(path.join(targetDir, "README.md"), (text) => {
-		if (text.includes("## Selected Options")) {
-			return text;
-		}
+		updateTextFile(path.join(targetDir, readme.fileName), (text) => {
+			if (text.includes(readme.heading)) {
+				return text;
+			}
 
-		return text.replace("## Getting Started\n", `${section}## Getting Started\n`);
-	});
+			if (!text.includes(readme.anchor)) {
+				throw new Error(`Could not find README insertion marker: ${readme.anchor.trim()}`);
+			}
+
+			return text.replace(readme.anchor, `${section}${readme.anchor}`);
+		});
+	}
 }
 
 function appendIgnoreEntry(targetDir, fileName, entry) {
