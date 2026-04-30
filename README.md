@@ -1,7 +1,7 @@
 <h1 align="center">create-typescript-express</h1>
 
 <p align="center">
-  A lightweight npm initializer for Express 5, TypeScript, linting, tests, Docker, and CI.
+  A polished npm initializer for Express 5, TypeScript, linting, tests, Docker, CI, and optional API features.
 </p>
 
 <p align="center">
@@ -26,7 +26,9 @@
 It is designed for teams that want a clean base that runs immediately after creation:
 
 - Express 5 with TypeScript strict mode.
+- Interactive CLI prompts inspired by `create-next-app`.
 - Node 24 LTS baseline and npm lockfile support.
+- `@/*` TypeScript import alias configured for both development and production builds.
 - `tsx` development server, compiled production output, and static asset copying.
 - ESLint, Prettier, `node:test`, Supertest, and GitHub Actions.
 - Dockerfile, health check endpoint, `.env.example`, and multilingual docs.
@@ -39,11 +41,16 @@ It is designed for teams that want a clean base that runs immediately after crea
 ```bash
 npm create typescript-express@latest my-api
 cd my-api
-npm install
 npm run dev
 ```
 
 Open `http://localhost:8000`.
+
+For non-interactive usage, pass `--yes`:
+
+```bash
+npm create typescript-express@latest my-api -- --yes
+```
 
 Generated projects include:
 
@@ -56,10 +63,39 @@ npm run build
 npm run check
 ```
 
+## CLI Options
+
+The default flow asks for a project name, whether to use recommended defaults, package manager, install behavior, and optional feature groups when customizing.
+
+```bash
+npm create typescript-express@latest [project-name] -- [options]
+```
+
+Common options:
+
+- `--yes` - use recommended defaults without prompts.
+- `--import-alias <alias>` / `--no-import-alias` - configure or disable TypeScript path aliasing.
+- `--features <list>` - add optional feature groups: `security`, `validation`, `openapi`, `prisma`, `auth`.
+- `--no-views`, `--no-logging`, `--no-cookies`, `--no-dotenv`, `--no-docker`, `--no-ci` - trim built-in template pieces.
+- `--use-npm`, `--use-pnpm`, `--use-yarn`, `--use-bun` - choose the package manager.
+- `--skip-install` - create files without installing dependencies.
+
+Optional feature groups:
+
+| Feature      | Adds                                                                  |
+| ------------ | --------------------------------------------------------------------- |
+| `security`   | `helmet`, `cors`, `compression`, and `express-rate-limit` middleware. |
+| `validation` | `zod`, a request validation helper, and a minimal validated route.    |
+| `openapi`    | `/openapi.json` and Swagger UI at `/docs`.                            |
+| `prisma`     | Prisma schema, client helper, and Prisma scripts.                     |
+| `auth`       | `jose` bearer JWT middleware helper.                                  |
+
 ## Generated Project
 
 ```text
 my-api
+├── .node-version
+├── .nvmrc
 ├── app.ts
 ├── bin/server.ts
 ├── routes/
@@ -81,6 +117,8 @@ The generated application exposes:
 
 This repository is the npm initializer package. The application that users receive lives in `template/`.
 
+Use Node 24 for local development. The root package and generated template both include `.nvmrc` and `.node-version` files that point to the same runtime baseline.
+
 ```bash
 npm ci
 npm run check
@@ -90,9 +128,17 @@ The root check validates:
 
 - The initializer CLI.
 - The bundled template.
-- A generated smoke project.
+- Generated smoke projects, including production `npm run start`, `/health`, and optional feature checks.
 - `npm pack --dry-run`.
 - Production dependency audit.
+
+Docker is checked separately so local development does not require Docker for every `npm run check`:
+
+```bash
+npm run test:docker
+```
+
+CI and release workflows run both `npm run check` and `npm run test:docker`.
 
 ## Publishing
 

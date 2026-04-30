@@ -1,7 +1,7 @@
 <h1 align="center">create-typescript-express</h1>
 
 <p align="center">
-  一个轻量的 npm initializer，用来创建 Express 5、TypeScript、lint、测试、Docker 与 CI 都已配置好的项目。
+  一个更完整的 npm initializer，用来创建 Express 5、TypeScript、lint、测试、Docker、CI 与可选 API 功能都已配置好的项目。
 </p>
 
 <p align="center">
@@ -26,7 +26,9 @@
 它适合想要“创建后立刻能跑、能测、能检查”的项目：
 
 - Express 5 与 TypeScript strict mode。
+- 受 `create-next-app` 启发的交互式 CLI prompts。
 - Node 24 LTS 基线与 npm lockfile。
+- 已配置 `@/*` TypeScript import alias，development 与 production build 都可用。
 - `tsx` 开发服务器、可编译的 production output、静态资源复制。
 - ESLint、Prettier、`node:test`、Supertest 与 GitHub Actions。
 - Dockerfile、健康检查端点、`.env.example` 与多语言 README。
@@ -39,11 +41,16 @@
 ```bash
 npm create typescript-express@latest my-api
 cd my-api
-npm install
 npm run dev
 ```
 
 打开 `http://localhost:8000`。
+
+如果要非交互式创建项目，请加上 `--yes`：
+
+```bash
+npm create typescript-express@latest my-api -- --yes
+```
 
 生成后的项目包含：
 
@@ -56,10 +63,39 @@ npm run build
 npm run check
 ```
 
+## CLI 选项
+
+默认流程会询问 project name、是否使用 recommended defaults、package manager、是否安装依赖，以及在自定义模式下选择 optional feature groups。
+
+```bash
+npm create typescript-express@latest [project-name] -- [options]
+```
+
+常用选项：
+
+- `--yes`：不进入 prompts，直接使用 recommended defaults。
+- `--import-alias <alias>` / `--no-import-alias`：配置或停用 TypeScript path alias。
+- `--features <list>`：加入可选功能组：`security`、`validation`、`openapi`、`prisma`、`auth`。
+- `--no-views`、`--no-logging`、`--no-cookies`、`--no-dotenv`、`--no-docker`、`--no-ci`：裁剪内置模板能力。
+- `--use-npm`、`--use-pnpm`、`--use-yarn`、`--use-bun`：指定 package manager。
+- `--skip-install`：只生成文件，不安装依赖。
+
+可选功能组：
+
+| Feature      | 加入内容                                                             |
+| ------------ | -------------------------------------------------------------------- |
+| `security`   | `helmet`、`cors`、`compression` 与 `express-rate-limit` middleware。 |
+| `validation` | `zod`、request validation helper 与最小 validated route。            |
+| `openapi`    | `/openapi.json` 与 `/docs` Swagger UI。                              |
+| `prisma`     | Prisma schema、client helper 与 Prisma scripts。                     |
+| `auth`       | `jose` bearer JWT middleware helper。                                |
+
 ## 生成后的项目
 
 ```text
 my-api
+├── .node-version
+├── .nvmrc
 ├── app.ts
 ├── bin/server.ts
 ├── routes/
@@ -81,6 +117,8 @@ my-api
 
 这个 repository 是 npm initializer package。用户真正会收到的应用模板放在 `template/`。
 
+本地开发请使用 Node 24。根目录 package 和生成后的模板都包含 `.nvmrc` 与 `.node-version`，并指向同一个 runtime 基线。
+
 ```bash
 npm ci
 npm run check
@@ -90,9 +128,17 @@ npm run check
 
 - initializer CLI。
 - 内置模板。
-- 生成后的 smoke project。
+- 生成后的 smoke projects，包含 production `npm run start`、`/health` 与 optional feature checks。
 - `npm pack --dry-run`。
 - production dependency audit。
+
+Docker 另外检查，避免每次本地 `npm run check` 都要求 Docker：
+
+```bash
+npm run test:docker
+```
+
+CI 和 release workflow 会同时执行 `npm run check` 与 `npm run test:docker`。
 
 ## 发布
 

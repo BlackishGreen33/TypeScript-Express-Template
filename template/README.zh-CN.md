@@ -14,11 +14,14 @@
 
 - Express 5 与 TypeScript strict mode。
 - Node 24 LTS 基线与 npm lockfile。
+- 内部 TypeScript modules 使用 `@/*` import alias。
 - 使用 `tsx` watch mode 进行本地开发。
 - ESLint、Prettier、`node:test` 与 Supertest。
 - Pug views、静态资源、`.env.example`、Dockerfile 与 GitHub Actions CI。
 
 ## 开始使用
+
+请使用 Node 24。这个项目包含 `.nvmrc` 与 `.node-version`，可供版本管理工具读取。
 
 ```bash
 npm install
@@ -35,7 +38,7 @@ npm run typecheck    # 只检查 TypeScript 类型，不输出文件
 npm run lint         # 执行 ESLint
 npm run format:check # 检查 Prettier 格式
 npm test             # build 后执行 HTTP 测试
-npm run build        # 编译 TypeScript 并复制静态资源
+npm run build        # 编译 TypeScript、改写 aliases 并复制静态资源
 npm run check        # 执行完整本地质量检查
 ```
 
@@ -56,6 +59,8 @@ docker run --rm -p 8000:8000 typescript-express-app
 
 ```text
 .
+├── .node-version
+├── .nvmrc
 ├── app.ts
 ├── bin/server.ts
 ├── routes/
