@@ -23,3 +23,6 @@ jobs:
 
             - name: Run package, template, and smoke checks
               run: npm run check
+
+            - name: Run Docker smoke check
+              run: npm run test:docker

@@ -31,6 +31,9 @@ jobs:
             - name: Run release checks
               run: npm run check
 
+            - name: Run Docker smoke check
+              run: npm run test:docker
+
             - name: Check registry version
               id: registry
               shell: bash

@@ -49,6 +49,7 @@
 		"test": "node --test test/*.test.js",
 		"test:template": "npm --prefix template ci && npm --prefix template run check",
 		"test:smoke": "node test/smoke-create.js",
+		"test:docker": "node test/docker-smoke.js",
 		"pack:dry-run": "npm pack --dry-run",
 		"audit": "npm audit --omit dev",
 		"audit:template": "npm --prefix template audit --omit dev",
