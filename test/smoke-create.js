@@ -9,6 +9,8 @@ const rootDir = path.resolve(__dirname, "..");
 const cliPath = path.join(rootDir, packageJson.bin["create-typescript-express"]);
 const targetDir = path.join(rootDir, ".tmp", "smoke-app");
 const featureTargetDir = path.join(rootDir, ".tmp", "smoke-app-features");
+const noViewsTargetDir = path.join(rootDir, ".tmp", "smoke-app-no-views");
+const plainFeatureTargetDir = path.join(rootDir, ".tmp", "smoke-app-plain-features");
 
 function run(command, args, options = {}) {
 	const result = spawnSync(command, args, {
@@ -89,6 +91,8 @@ async function main() {
 	try {
 		fs.rmSync(targetDir, { recursive: true, force: true });
 		fs.rmSync(featureTargetDir, { recursive: true, force: true });
+		fs.rmSync(noViewsTargetDir, { recursive: true, force: true });
+		fs.rmSync(plainFeatureTargetDir, { recursive: true, force: true });
 		fs.mkdirSync(path.dirname(targetDir), { recursive: true });
 
 		run(process.execPath, [cliPath, targetDir, "--yes", "--skip-install"]);
@@ -115,6 +119,22 @@ async function main() {
 		run("npm", ["install"], { cwd: featureTargetDir });
 		run("npm", ["run", "check"], { cwd: featureTargetDir });
 		run("npm", ["audit", "--omit", "dev"], { cwd: featureTargetDir });
+
+		run(process.execPath, [cliPath, noViewsTargetDir, "--yes", "--no-views", "--skip-install"]);
+		run("npm", ["install"], { cwd: noViewsTargetDir });
+		run("npm", ["run", "build"], { cwd: noViewsTargetDir });
+
+		run(process.execPath, [
+			cliPath,
+			plainFeatureTargetDir,
+			"--yes",
+			"--features",
+			"validation,openapi",
+			"--no-import-alias",
+			"--skip-install"
+		]);
+		run("npm", ["install"], { cwd: plainFeatureTargetDir });
+		run("npm", ["run", "build"], { cwd: plainFeatureTargetDir });
 	} finally {
 		if (serverProcess) {
 			await stopProcess(serverProcess);
@@ -122,6 +142,8 @@ async function main() {
 
 		fs.rmSync(targetDir, { recursive: true, force: true });
 		fs.rmSync(featureTargetDir, { recursive: true, force: true });
+		fs.rmSync(noViewsTargetDir, { recursive: true, force: true });
+		fs.rmSync(plainFeatureTargetDir, { recursive: true, force: true });
 	}
 }
 

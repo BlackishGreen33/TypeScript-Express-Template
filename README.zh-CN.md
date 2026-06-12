@@ -117,9 +117,10 @@ my-api
 
 这个 repository 是 npm initializer package。用户真正会收到的应用模板放在 `template/`。
 
-本地开发请使用 Node 24。根目录 package 和生成后的模板都包含 `.nvmrc` 与 `.node-version`，并指向同一个 runtime 基线。
+本地开发请使用 Node 24。根目录 package 和生成后的模板都包含 `.nvmrc` 与 `.node-version`，并指向同一个 runtime 基线。安装 dependencies 或执行检查前，请先切换到 Node 24。
 
 ```bash
+fnm use || nvm use
 npm ci
 npm run check
 ```

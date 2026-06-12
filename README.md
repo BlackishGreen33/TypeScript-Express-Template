@@ -117,9 +117,10 @@ The generated application exposes:
 
 This repository is the npm initializer package. The application that users receive lives in `template/`.
 
-Use Node 24 for local development. The root package and generated template both include `.nvmrc` and `.node-version` files that point to the same runtime baseline.
+Use Node 24 for local development. The root package and generated template both include `.nvmrc` and `.node-version` files that point to the same runtime baseline. Switch to Node 24 before installing dependencies or running checks.
 
 ```bash
+fnm use || nvm use
 npm ci
 npm run check
 ```

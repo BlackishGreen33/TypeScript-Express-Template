@@ -21,9 +21,10 @@
 
 ## 开始使用
 
-请使用 Node 24。这个项目包含 `.nvmrc` 与 `.node-version`，可供版本管理工具读取。
+请使用 Node 24。这个项目包含 `.nvmrc` 与 `.node-version`，可供版本管理工具读取。安装 dependencies 或执行检查前，请先切换到 Node 24。
 
 ```bash
+fnm use || nvm use
 npm install
 npm run dev
 ```

@@ -193,6 +193,7 @@ test("can remove built-in template pieces and disable import alias", () => {
 	assert.ok(!fs.existsSync(path.join(targetDir, "views")));
 	assert.ok(!fs.existsSync(path.join(targetDir, ".env.example")));
 	assert.ok(!fs.existsSync(path.join(targetDir, "package-lock.json")));
+	assert.doesNotMatch(fs.readFileSync(path.join(targetDir, "copyStatic.ts"), "utf8"), /"views"/);
 
 	const generatedPackage = JSON.parse(
 		fs.readFileSync(path.join(targetDir, "package.json"), "utf8")

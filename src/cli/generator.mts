@@ -262,14 +262,15 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 
 function disableViews(targetDir: string) {
 	removePath(targetDir, "views");
-	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
-		text
-			.replace(
-				'app.set("views", path.join(__dirname, "views"));\napp.set("view engine", "pug");\n\n',
-				""
-			)
-			.replace(
-				`app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
+	updateTextFile(path.join(targetDir, "app.ts"), (text) => {
+		let next = replaceRequired(
+			text,
+			'app.set("views", path.join(__dirname, "views"));\napp.set("view engine", "pug");\n\n',
+			""
+		);
+		next = replaceRequired(
+			next,
+			`app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
 \tconst status = err.status || 500;
 
 \tres.locals.message = err.message;
@@ -280,7 +281,7 @@ function disableViews(targetDir: string) {
 \tres.render("error");
 });
 `,
-				`app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
+			`app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
 \tconst status = err.status || 500;
 
 \tres.status(status).json({
@@ -289,10 +290,15 @@ function disableViews(targetDir: string) {
 \t});
 });
 `
-			)
+		);
+		return next;
+	});
+	updateTextFile(path.join(targetDir, "copyStatic.ts"), (text) =>
+		replaceRequired(text, 'cpSync("views", "dist/views", { recursive: true });\n', "")
 	);
 	updateTextFile(path.join(targetDir, "test/app.test.ts"), (text) =>
-		text.replace(
+		replaceRequired(
+			text,
 			`test("GET /not-found uses the app error view without a stack trace", async () => {
 \tconst response = await request(app).get("/not-found").expect(404);
 
@@ -496,6 +502,14 @@ function insertAfter(text: string, marker: string, addition: string) {
 	}
 
 	return text.replace(marker, `${marker}${addition}`);
+}
+
+function replaceRequired(text: string, searchValue: string, replacement: string) {
+	if (!text.includes(searchValue)) {
+		throw new Error(`Could not find replacement marker: ${searchValue.trim()}`);
+	}
+
+	return text.replace(searchValue, replacement);
 }
 
 function insertRoute(text: string, routeText: string) {
