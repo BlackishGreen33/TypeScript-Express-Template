@@ -25,6 +25,8 @@ interface TsConfig {
 	[key: string]: unknown;
 }
 
+type TextReplacement = readonly [searchValue: string, replacement: string];
+
 const runtimeDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir =
 	path.basename(runtimeDir) === "dist-cli"
@@ -32,6 +34,22 @@ const rootDir =
 		: path.resolve(runtimeDir, "../..");
 const templateDir = path.join(rootDir, "template");
 const snippetsDir = path.join(rootDir, "bin/snippets");
+const aliasImportFiles = [
+	"app.ts",
+	"bin/server.ts",
+	"routes/index.ts",
+	"middleware/auth.ts",
+	"middleware/validateBody.ts",
+	"routes/handlers/modules/echo.ts"
+];
+const noAliasImportReplacements: Record<string, string> = {
+	"@/app": "../app",
+	"@/routes/handlers": "./handlers",
+	"@/routes": "./routes",
+	"@/types": "../types",
+	"@/middleware/validateBody": "../middleware/validateBody",
+	"@/openapi": "./openapi"
+};
 
 export function createProject(
 	config: CreateConfig,
@@ -187,14 +205,7 @@ function applyAlias(targetDir: string, packageJson: PackageJson, alias: string |
 		delete tsconfig.compilerOptions.ignoreDeprecations;
 		packageJson.scripts.build = "npm run ts-build && npm run copy-static";
 		removePackages(packageJson, "devDependencies", ["tsc-alias"]);
-		replaceDefaultAliasImports(targetDir, {
-			"@/app": "../app",
-			"@/routes/handlers": "./handlers",
-			"@/routes": "./routes",
-			"@/types": "../types",
-			"@/middleware/validateBody": "../middleware/validateBody",
-			"@/openapi": "./openapi"
-		});
+		replaceDefaultAliasImports(targetDir, noAliasImportReplacements);
 		writeTsconfig(tsconfigPath, tsconfig);
 		return;
 	}
@@ -209,7 +220,7 @@ function applyAlias(targetDir: string, packageJson: PackageJson, alias: string |
 
 	if (alias && alias !== DEFAULT_IMPORT_ALIAS) {
 		const prefix = aliasToPrefix(alias);
-		replaceDefaultAliasImports(targetDir, { "@/": prefix });
+		replaceDefaultAliasImports(targetDir, createCustomAliasReplacements(prefix));
 	}
 
 	writeTsconfig(tsconfigPath, tsconfig);
@@ -228,32 +239,40 @@ function aliasToPrefix(alias: string) {
 	return alias.replace(/\*$/, "");
 }
 
-function replaceDefaultAliasImports(targetDir: string, replacements: Record<string, string>) {
-	const files = [
-		"app.ts",
-		"bin/server.ts",
-		"routes/index.ts",
-		"middleware/auth.ts",
-		"middleware/validateBody.ts",
-		"routes/handlers/modules/echo.ts"
-	];
+function createCustomAliasReplacements(prefix: string): Record<string, string> {
+	return { "@/": prefix };
+}
 
+function replaceDefaultAliasImports(targetDir: string, replacements: Record<string, string>) {
+	updateOptionalTextFiles(targetDir, aliasImportFiles, (text) => {
+		let next = text;
+		for (const [from, to] of Object.entries(replacements)) {
+			next = next.replaceAll(from, to);
+		}
+		return next;
+	});
+}
+
+function updateOptionalTextFiles(
+	targetDir: string,
+	files: string[],
+	updater: (text: string) => string
+) {
 	for (const file of files) {
-		const filePath = path.join(targetDir, file);
 		try {
-			updateTextFile(filePath, (text) => {
-				let next = text;
-				for (const [from, to] of Object.entries(replacements)) {
-					next = next.replaceAll(from, to);
-				}
-				return next;
-			});
+			updateTextFile(path.join(targetDir, file), updater);
 		} catch (error) {
-			if (!isNodeError(error) || error.code !== "ENOENT") {
-				throw error;
+			if (isMissingFile(error)) {
+				continue;
 			}
+
+			throw error;
 		}
 	}
+}
+
+function isMissingFile(error: unknown) {
+	return isNodeError(error) && error.code === "ENOENT";
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
@@ -262,15 +281,14 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 
 function disableViews(targetDir: string) {
 	removePath(targetDir, "views");
-	updateTextFile(path.join(targetDir, "app.ts"), (text) => {
-		let next = replaceRequired(
-			text,
-			'app.set("views", path.join(__dirname, "views"));\napp.set("view engine", "pug");\n\n',
-			""
-		);
-		next = replaceRequired(
-			next,
-			`app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
+	updateTextFile(path.join(targetDir, "app.ts"), (text) =>
+		replaceRequiredAll(text, [
+			[
+				'app.set("views", path.join(__dirname, "views"));\napp.set("view engine", "pug");\n\n',
+				""
+			],
+			[
+				`app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
 \tconst status = err.status || 500;
 
 \tres.locals.message = err.message;
@@ -281,7 +299,7 @@ function disableViews(targetDir: string) {
 \tres.render("error");
 });
 `,
-			`app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
+				`app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
 \tconst status = err.status || 500;
 
 \tres.status(status).json({
@@ -290,9 +308,9 @@ function disableViews(targetDir: string) {
 \t});
 });
 `
-		);
-		return next;
-	});
+			]
+		])
+	);
 	updateTextFile(path.join(targetDir, "copyStatic.ts"), (text) =>
 		replaceRequired(text, 'cpSync("views", "dist/views", { recursive: true });\n', "")
 	);
@@ -510,6 +528,13 @@ function replaceRequired(text: string, searchValue: string, replacement: string)
 	}
 
 	return text.replace(searchValue, replacement);
+}
+
+function replaceRequiredAll(text: string, replacements: TextReplacement[]) {
+	return replacements.reduce(
+		(next, [searchValue, replacement]) => replaceRequired(next, searchValue, replacement),
+		text
+	);
 }
 
 function insertRoute(text: string, routeText: string) {

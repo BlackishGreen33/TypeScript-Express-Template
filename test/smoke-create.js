@@ -7,10 +7,52 @@ const packageJson = require("../package.json");
 
 const rootDir = path.resolve(__dirname, "..");
 const cliPath = path.join(rootDir, packageJson.bin["create-typescript-express"]);
-const targetDir = path.join(rootDir, ".tmp", "smoke-app");
-const featureTargetDir = path.join(rootDir, ".tmp", "smoke-app-features");
-const noViewsTargetDir = path.join(rootDir, ".tmp", "smoke-app-no-views");
-const plainFeatureTargetDir = path.join(rootDir, ".tmp", "smoke-app-plain-features");
+const smokeRootDir = path.join(rootDir, ".tmp");
+const smokeCases = [
+	{
+		name: "default app",
+		targetDir: path.join(smokeRootDir, "smoke-app"),
+		createArgs: ["--yes", "--skip-install"],
+		installArgs: ["ci"],
+		checks: [["npm", ["run", "check"]]],
+		start: true
+	},
+	{
+		name: "full feature app",
+		targetDir: path.join(smokeRootDir, "smoke-app-features"),
+		createArgs: [
+			"--yes",
+			"--features",
+			"security,validation,openapi,prisma,auth",
+			"--skip-install"
+		],
+		installArgs: ["install"],
+		checks: [
+			["npm", ["run", "check"]],
+			["npm", ["audit", "--omit", "dev"]]
+		]
+	},
+	{
+		name: "no views app",
+		targetDir: path.join(smokeRootDir, "smoke-app-no-views"),
+		createArgs: ["--yes", "--no-views", "--skip-install"],
+		installArgs: ["install"],
+		checks: [["npm", ["run", "build"]]]
+	},
+	{
+		name: "plain feature app",
+		targetDir: path.join(smokeRootDir, "smoke-app-plain-features"),
+		createArgs: [
+			"--yes",
+			"--features",
+			"validation,openapi",
+			"--no-import-alias",
+			"--skip-install"
+		],
+		installArgs: ["install"],
+		checks: [["npm", ["run", "build"]]]
+	}
+];
 
 function run(command, args, options = {}) {
 	const result = spawnSync(command, args, {
@@ -89,61 +131,41 @@ async function main() {
 	let serverProcess;
 
 	try {
-		fs.rmSync(targetDir, { recursive: true, force: true });
-		fs.rmSync(featureTargetDir, { recursive: true, force: true });
-		fs.rmSync(noViewsTargetDir, { recursive: true, force: true });
-		fs.rmSync(plainFeatureTargetDir, { recursive: true, force: true });
-		fs.mkdirSync(path.dirname(targetDir), { recursive: true });
+		for (const smokeCase of smokeCases) {
+			fs.rmSync(smokeCase.targetDir, { recursive: true, force: true });
+		}
+		fs.mkdirSync(smokeRootDir, { recursive: true });
 
-		run(process.execPath, [cliPath, targetDir, "--yes", "--skip-install"]);
-		run("npm", ["ci"], { cwd: targetDir });
-		run("npm", ["run", "check"], { cwd: targetDir });
+		for (const smokeCase of smokeCases) {
+			console.log(`\nRunning smoke case: ${smokeCase.name}`);
+			run(process.execPath, [cliPath, smokeCase.targetDir, ...smokeCase.createArgs]);
+			run("npm", smokeCase.installArgs, { cwd: smokeCase.targetDir });
 
-		const port = await getFreePort();
-		serverProcess = spawn("npm", ["run", "start"], {
-			cwd: targetDir,
-			env: { ...process.env, PORT: String(port), NODE_ENV: "production" },
-			stdio: "inherit"
-		});
+			for (const [command, args] of smokeCase.checks) {
+				run(command, args, { cwd: smokeCase.targetDir });
+			}
 
-		await waitForHealth(port);
+			if (smokeCase.start) {
+				const port = await getFreePort();
+				serverProcess = spawn("npm", ["run", "start"], {
+					cwd: smokeCase.targetDir,
+					env: { ...process.env, PORT: String(port), NODE_ENV: "production" },
+					stdio: "inherit"
+				});
 
-		run(process.execPath, [
-			cliPath,
-			featureTargetDir,
-			"--yes",
-			"--features",
-			"security,validation,openapi,prisma,auth",
-			"--skip-install"
-		]);
-		run("npm", ["install"], { cwd: featureTargetDir });
-		run("npm", ["run", "check"], { cwd: featureTargetDir });
-		run("npm", ["audit", "--omit", "dev"], { cwd: featureTargetDir });
-
-		run(process.execPath, [cliPath, noViewsTargetDir, "--yes", "--no-views", "--skip-install"]);
-		run("npm", ["install"], { cwd: noViewsTargetDir });
-		run("npm", ["run", "build"], { cwd: noViewsTargetDir });
-
-		run(process.execPath, [
-			cliPath,
-			plainFeatureTargetDir,
-			"--yes",
-			"--features",
-			"validation,openapi",
-			"--no-import-alias",
-			"--skip-install"
-		]);
-		run("npm", ["install"], { cwd: plainFeatureTargetDir });
-		run("npm", ["run", "build"], { cwd: plainFeatureTargetDir });
+				await waitForHealth(port);
+				await stopProcess(serverProcess);
+				serverProcess = undefined;
+			}
+		}
 	} finally {
 		if (serverProcess) {
 			await stopProcess(serverProcess);
 		}
 
-		fs.rmSync(targetDir, { recursive: true, force: true });
-		fs.rmSync(featureTargetDir, { recursive: true, force: true });
-		fs.rmSync(noViewsTargetDir, { recursive: true, force: true });
-		fs.rmSync(plainFeatureTargetDir, { recursive: true, force: true });
+		for (const smokeCase of smokeCases) {
+			fs.rmSync(smokeCase.targetDir, { recursive: true, force: true });
+		}
 	}
 }
 

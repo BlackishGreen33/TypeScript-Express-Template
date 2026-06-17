@@ -55,15 +55,17 @@
 		"format": "prettier --write \"**/*.{js,mjs,mts,json,md,yml,yaml,css,ts}\"",
 		"format:check": "prettier --check \"**/*.{js,mjs,mts,json,md,yml,yaml,css,ts}\"",
 		"pretest": "npm run build:cli",
-		"test": "node --test test/*.test.js",
+		"test": "node --test test/create.test.js",
 		"test:template": "npm --prefix template ci && npm --prefix template run check",
 		"test:smoke": "node test/smoke-create.js",
 		"test:docker": "node test/docker-smoke.js",
+		"test:pack": "node --test test/pack-contents.test.js",
 		"prepack": "npm run build:cli",
 		"pack:dry-run": "npm pack --dry-run",
+		"clean": "rm -rf .tmp dist-cli template/dist template/node_modules create-typescript-express-*.tgz",
 		"audit": "npm audit --omit dev",
 		"audit:template": "npm --prefix template audit --omit dev",
-		"check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:template && npm run test:smoke && npm run pack:dry-run && npm run audit && npm run audit:template"
+		"check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run test:template && npm run test:smoke && npm run test:pack && npm run pack:dry-run && npm run audit && npm run audit:template"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

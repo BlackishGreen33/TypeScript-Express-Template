@@ -177,6 +177,54 @@ test("allows complete non-interactive flags without --yes", () => {
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
+test("deduplicates repeated feature flags", () => {
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-typescript-express-"));
+	const targetDir = path.join(tempDir, "dedupe-api");
+
+	const result = runCreate(targetDir, ["--features", "validation,validation,openapi"]);
+
+	assert.equal(result.status, 0, result.stderr || result.stdout);
+	assert.match(
+		fs.readFileSync(path.join(targetDir, "README.md"), "utf8"),
+		/Optional features: validation, openapi/
+	);
+
+	const routes = fs.readFileSync(path.join(targetDir, "routes/index.ts"), "utf8");
+	assert.equal(routes.match(/path: "\/echo"/g).length, 1);
+
+	fs.rmSync(tempDir, { recursive: true, force: true });
+});
+
+test("rejects unknown feature flags", () => {
+	const result = runCreate("unknown-feature-api", ["--features", "validation,queues"]);
+
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /Unknown feature option: queues/);
+});
+
+test("rejects conflicting package manager flags", () => {
+	const result = runCli([
+		"manager-api",
+		"--features",
+		"none",
+		"--import-alias",
+		"@/*",
+		"--use-npm",
+		"--use-pnpm",
+		"--skip-install"
+	]);
+
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /Choose only one package manager flag/);
+});
+
+test("rejects invalid import aliases", () => {
+	const result = runCreate("bad-alias-api", ["--import-alias", "@"]);
+
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /Import alias must end with \/\*/);
+});
+
 test("can remove built-in template pieces and disable import alias", () => {
 	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-typescript-express-"));
 	const targetDir = path.join(tempDir, "minimal-api");
