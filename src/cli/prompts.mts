@@ -1,49 +1,9 @@
 import pc from "picocolors";
 
-import {
-	DEFAULT_IMPORT_ALIAS,
-	featureDefinitions,
-	supportedPackageManagers
-} from "./constants.mjs";
-import type {
-	CreateConfig,
-	CreateConfigDraft,
-	FeatureName,
-	PackageManager,
-	PromptOptions
-} from "./types.mjs";
+import { DEFAULT_IMPORT_ALIAS, featureDefinitions } from "./constants.mjs";
+import type { CreateConfig, CreateConfigDraft, FeatureName, PromptOptions } from "./types.mjs";
 
 type Prompts = typeof import("@clack/prompts");
-
-const packageManagerOptionKeys: Record<PackageManager, keyof PromptOptions> = {
-	npm: "useNpm",
-	pnpm: "usePnpm",
-	yarn: "useYarn",
-	bun: "useBun"
-};
-
-export function detectPackageManager(): PackageManager {
-	const userAgent = process.env.npm_config_user_agent || "";
-	const [name] = userAgent.split("/");
-
-	if (supportedPackageManagers.includes(name as PackageManager)) {
-		return name as PackageManager;
-	}
-
-	return "npm";
-}
-
-function parsePackageManager(options: PromptOptions): PackageManager {
-	const selected = supportedPackageManagers.filter(
-		(manager) => options[packageManagerOptionKeys[manager]]
-	);
-
-	if (selected.length > 1) {
-		throw new Error("Choose only one package manager flag.");
-	}
-
-	return selected[0] || detectPackageManager();
-}
 
 function parseFeatures(value: string | undefined): FeatureName[] {
 	if (!value) {
@@ -80,8 +40,14 @@ export function validateImportAlias(alias: string | false | undefined): string |
 		return DEFAULT_IMPORT_ALIAS;
 	}
 
-	if (!/^[~@#a-zA-Z0-9._/-]+\/\*$/.test(alias)) {
-		throw new Error(`Import alias must end with /*, for example ${DEFAULT_IMPORT_ALIAS}.`);
+	if (
+		alias.startsWith(".") ||
+		alias.startsWith("/") ||
+		!/^[~@#a-zA-Z0-9._/-]+\/\*$/.test(alias)
+	) {
+		throw new Error(
+			`Import alias must be a non-relative specifier ending in /*, for example ${DEFAULT_IMPORT_ALIAS}.`
+		);
 	}
 
 	return alias;
@@ -102,7 +68,6 @@ function createBaseConfig(
 		docker: options.docker !== false,
 		ci: options.ci !== false,
 		install: options.skipInstall !== true,
-		packageManager: parsePackageManager(options),
 		yes: options.yes === true
 	};
 }
@@ -144,8 +109,7 @@ function hasCompleteFlagConfig(projectPath: string | undefined, argv: string[]) 
 	return (
 		Boolean(projectPath) &&
 		hasFlag(argv, "--features") &&
-		(hasFlag(argv, "--import-alias") || hasFlag(argv, "--no-import-alias")) &&
-		supportedPackageManagers.some((manager) => hasFlag(argv, `--use-${manager}`))
+		(hasFlag(argv, "--import-alias") || hasFlag(argv, "--no-import-alias"))
 	);
 }
 
@@ -204,7 +168,6 @@ async function promptForConfig(config: CreateConfigDraft): Promise<CreateConfig>
 	const importAlias = await promptImportAlias(prompts, config.importAlias);
 	const toggles = await promptToggles(prompts, config);
 	const features = await promptFeatures(prompts, config.features);
-	const packageManager = await promptPackageManager(prompts, config.packageManager);
 	const install = await promptInstall(prompts, config.install);
 
 	return {
@@ -213,7 +176,6 @@ async function promptForConfig(config: CreateConfigDraft): Promise<CreateConfig>
 		projectPath,
 		importAlias,
 		features,
-		packageManager,
 		install
 	};
 }
@@ -307,26 +269,6 @@ async function promptFeatures(prompts: Prompts, currentFeatures: FeatureName[]) 
 	}
 
 	return selected as FeatureName[];
-}
-
-async function promptPackageManager(
-	prompts: Prompts,
-	currentPackageManager: PackageManager
-): Promise<PackageManager> {
-	const selected = await prompts.select({
-		message: "Which package manager would you like to use?",
-		initialValue: currentPackageManager,
-		options: supportedPackageManagers.map((manager) => ({
-			value: manager,
-			label: manager
-		}))
-	});
-
-	if (prompts.isCancel(selected)) {
-		cancel(prompts);
-	}
-
-	return selected as PackageManager;
 }
 
 async function promptInstall(prompts: Prompts, currentInstall: boolean) {

@@ -1,11 +1,10 @@
+import "dotenv/config";
+
 import debug from "debug";
 import http from "http";
 import { HttpError } from "http-errors";
-import * as dotenv from "dotenv";
 
 import app from "@/app";
-
-dotenv.config();
 
 const port = normalizePort(process.env.PORT || "8000");
 app.set("port", port);

@@ -65,7 +65,7 @@ npm run check
 
 ## CLI Options
 
-The default flow asks for a project name, whether to use recommended defaults, package manager, install behavior, and optional feature groups when customizing.
+The default flow asks for a project name, whether to use recommended defaults, install behavior, and optional feature groups when customizing.
 
 ```bash
 npm create typescript-express@latest [project-name] -- [options]
@@ -77,7 +77,6 @@ Common options:
 - `--import-alias <alias>` / `--no-import-alias` - configure or disable TypeScript path aliasing.
 - `--features <list>` - add optional feature groups: `security`, `validation`, `openapi`, `prisma`, `auth`.
 - `--no-views`, `--no-logging`, `--no-cookies`, `--no-dotenv`, `--no-docker`, `--no-ci` - trim built-in template pieces.
-- `--use-npm`, `--use-pnpm`, `--use-yarn`, `--use-bun` - choose the package manager.
 - `--skip-install` - create files without installing dependencies.
 
 Optional feature groups:

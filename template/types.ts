@@ -1,15 +1,7 @@
 import { RequestHandler } from "express";
 
 type Method =
-	| "get"
-	| "head"
-	| "post"
-	| "put"
-	| "delete"
-	| "connect"
-	| "options"
-	| "trace"
-	| "patch";
+	"get" | "head" | "post" | "put" | "delete" | "connect" | "options" | "trace" | "patch";
 
 export type RouteType = {
 	method: Method;

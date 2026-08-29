@@ -65,7 +65,7 @@ npm run check
 
 ## CLI 選項
 
-預設流程會詢問 project name、是否使用 recommended defaults、package manager、是否安裝依賴，以及在自訂模式下選擇 optional feature groups。
+預設流程會詢問 project name、是否使用 recommended defaults、是否安裝依賴，以及在自訂模式下選擇 optional feature groups。
 
 ```bash
 npm create typescript-express@latest [project-name] -- [options]
@@ -77,7 +77,6 @@ npm create typescript-express@latest [project-name] -- [options]
 - `--import-alias <alias>` / `--no-import-alias`：配置或停用 TypeScript path alias。
 - `--features <list>`：加入可選功能群組：`security`、`validation`、`openapi`、`prisma`、`auth`。
 - `--no-views`、`--no-logging`、`--no-cookies`、`--no-dotenv`、`--no-docker`、`--no-ci`：裁剪內建模板能力。
-- `--use-npm`、`--use-pnpm`、`--use-yarn`、`--use-bun`：指定 package manager。
 - `--skip-install`：只產生檔案，不安裝依賴。
 
 可選功能群組：

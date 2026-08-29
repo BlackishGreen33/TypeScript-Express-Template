@@ -8,7 +8,7 @@ import { supportedFeatures } from "./constants.mjs";
 import { createProject } from "./generator.mjs";
 import { readJson } from "./filesystem.mjs";
 import { resolveConfig } from "./prompts.mjs";
-import type { CreateConfig, PackageJson, PackageManager } from "./types.mjs";
+import type { CreateConfig, PackageJson } from "./types.mjs";
 
 interface Spinner {
 	start(message: string): void;
@@ -43,10 +43,6 @@ export async function main(argv: string[]) {
 		.option("--no-dotenv", "Skip dotenv loading")
 		.option("--no-docker", "Skip Dockerfile and .dockerignore")
 		.option("--no-ci", "Skip GitHub Actions CI")
-		.option("--use-npm", "Install dependencies with npm")
-		.option("--use-pnpm", "Install dependencies with pnpm")
-		.option("--use-yarn", "Install dependencies with Yarn")
-		.option("--use-bun", "Install dependencies with Bun")
 		.option("--skip-install", "Create files without installing dependencies")
 		.addHelpText(
 			"after",
@@ -55,7 +51,7 @@ export async function main(argv: string[]) {
 Examples:
   npm create typescript-express@latest my-api
   npm create typescript-express@latest my-api -- --yes
-  npm create typescript-express@latest my-api -- --features security,validation --use-pnpm`
+  npm create typescript-express@latest my-api -- --features security,validation --no-views`
 		);
 
 	program.parse(argv, { from: "user" });
@@ -65,10 +61,10 @@ Examples:
 	let spinner: Spinner | undefined;
 
 	const result = createProject(config, {
-		onInstallStart(packageManager) {
+		onInstallStart() {
 			if (prompts) {
 				spinner = prompts.spinner();
-				spinner.start(`Installing dependencies with ${packageManager}`);
+				spinner.start("Installing dependencies with npm");
 			}
 		},
 		onInstallEnd() {
@@ -92,7 +88,7 @@ function printSuccess(
 	config: CreateConfig
 ) {
 	const cdCommand = result.relativeTarget === "." ? "" : `  cd ${result.relativeTarget}\n`;
-	const installCommand = config.install ? "" : `  ${installCommandFor(config.packageManager)}\n`;
+	const installCommand = config.install ? "" : "  npm install\n";
 	const featureText = config.features.length > 0 ? config.features.join(", ") : "none";
 	const aliasText = config.importAlias === false ? "disabled" : config.importAlias;
 
@@ -102,7 +98,6 @@ function printSuccess(
 	console.log(pc.bold("Selected options:"));
 	console.log(`  import alias: ${aliasText}`);
 	console.log(`  optional features: ${featureText}`);
-	console.log(`  package manager: ${config.packageManager}`);
 	console.log("");
 
 	if (result.lockfileRemoved) {
@@ -113,13 +108,5 @@ function printSuccess(
 	}
 
 	console.log(pc.bold("Next steps:"));
-	console.log(`${cdCommand}${installCommand}  ${config.packageManager} run dev`);
-}
-
-function installCommandFor(packageManager: PackageManager) {
-	if (packageManager === "npm") {
-		return "npm install";
-	}
-
-	return `${packageManager} install`;
+	console.log(`${cdCommand}${installCommand}  npm run dev`);
 }

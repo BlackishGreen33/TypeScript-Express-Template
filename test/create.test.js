@@ -29,6 +29,7 @@ test("prints help", () => {
 	assert.match(result.stdout, /Usage: create-typescript-express/);
 	assert.match(result.stdout, /--features <list>/);
 	assert.match(result.stdout, /--skip-install/);
+	assert.doesNotMatch(result.stdout, /--use-(?:npm|pnpm|yarn|bun)/);
 });
 
 test("prints version", () => {
@@ -36,6 +37,19 @@ test("prints version", () => {
 
 	assert.equal(result.status, 0, result.stderr || result.stdout);
 	assert.equal(result.stdout.trim(), packageJson.version);
+});
+
+test("repository workflows grant write permissions only to the publish job", () => {
+	const ci = fs.readFileSync(path.join(rootDir, ".github/workflows/ci.yml"), "utf8");
+	const release = fs.readFileSync(path.join(rootDir, ".github/workflows/release.yml"), "utf8");
+
+	assert.ok(ci.includes("permissions:\n    contents: read\n\njobs:"));
+	assert.ok(release.includes("permissions:\n    contents: read\n\njobs:"));
+	assert.ok(
+		release.includes(
+			"    publish:\n        permissions:\n            contents: write\n            id-token: write\n"
+		)
+	);
 });
 
 test("requires a project name", () => {
@@ -60,6 +74,7 @@ test("creates a project from the bundled template", () => {
 
 	assert.equal(result.status, 0, result.stderr || result.stdout);
 	assert.match(result.stdout, /Created my-api/);
+	assert.doesNotMatch(result.stdout, /package manager:/);
 	assert.ok(fs.existsSync(path.join(targetDir, ".gitignore")));
 	assert.ok(!fs.existsSync(path.join(targetDir, "_gitignore")));
 	assert.equal(fs.readFileSync(path.join(targetDir, ".nvmrc"), "utf8"), "24\n");
@@ -67,6 +82,11 @@ test("creates a project from the bundled template", () => {
 	assert.ok(fs.existsSync(path.join(targetDir, "README.md")));
 	assert.ok(fs.existsSync(path.join(targetDir, "README.zh-TW.md")));
 	assert.ok(fs.existsSync(path.join(targetDir, "README.zh-CN.md")));
+	assert.ok(
+		fs
+			.readFileSync(path.join(targetDir, ".github/workflows/ci.yml"), "utf8")
+			.includes("permissions:\n    contents: read\n\njobs:")
+	);
 	assert.match(fs.readFileSync(path.join(targetDir, "README.md"), "utf8"), /## Selected Options/);
 	assert.match(fs.readFileSync(path.join(targetDir, "README.zh-TW.md"), "utf8"), /## 已選選項/);
 	assert.match(fs.readFileSync(path.join(targetDir, "README.zh-CN.md"), "utf8"), /## 已选选项/);
@@ -78,6 +98,7 @@ test("creates a project from the bundled template", () => {
 	assert.equal(generatedPackage.version, "0.1.0");
 	assert.equal(generatedPackage.private, true);
 	assert.equal(generatedPackage.dependencies.express, "^5.2.1");
+	assert.equal(generatedPackage.devDependencies.prettier, "3.9.6");
 	assert.equal(generatedPackage.devDependencies["tsc-alias"], "^1.8.16");
 	assert.equal(
 		generatedPackage.scripts.build,
@@ -122,7 +143,10 @@ test("generates selected feature groups without a stale npm lockfile", () => {
 	assert.equal(generatedPackage.dependencies["@prisma/adapter-better-sqlite3"], "^7.8.0");
 	assert.equal(generatedPackage.dependencies["@prisma/client"], "^7.8.0");
 	assert.equal(generatedPackage.dependencies.jose, "^6.2.3");
-	assert.deepEqual(generatedPackage.overrides, { "@hono/node-server": "1.19.13" });
+	assert.deepEqual(generatedPackage.overrides, {
+		"@hono/node-server": "1.19.13",
+		"deepmerge-ts": "8.0.2"
+	});
 	assert.equal(generatedPackage.scripts.postinstall, "prisma generate");
 	assert.equal(generatedPackage.scripts["prisma:generate"], "prisma generate");
 
@@ -131,6 +155,26 @@ test("generates selected feature groups without a stale npm lockfile", () => {
 	assert.ok(fs.existsSync(path.join(targetDir, "openapi.ts")));
 	assert.ok(fs.existsSync(path.join(targetDir, "prisma.config.ts")));
 	assert.ok(fs.existsSync(path.join(targetDir, "prisma/schema.prisma")));
+	assert.ok(fs.existsSync(path.join(targetDir, "test/auth.test.ts")));
+	assert.ok(
+		fs
+			.readFileSync(path.join(targetDir, "bin/server.ts"), "utf8")
+			.startsWith('import "dotenv/config";')
+	);
+	assert.ok(
+		fs
+			.readFileSync(path.join(targetDir, "prisma.config.ts"), "utf8")
+			.startsWith('import "dotenv/config";')
+	);
+	assert.match(
+		fs.readFileSync(path.join(targetDir, ".env.example"), "utf8"),
+		/^DATABASE_URL=file:\.\/dev\.db$/m
+	);
+	assert.match(fs.readFileSync(path.join(targetDir, ".env.example"), "utf8"), /^JWT_SECRET=$/m);
+
+	const auth = fs.readFileSync(path.join(targetDir, "middleware/auth.ts"), "utf8");
+	assert.match(auth, /JWT_SECRET is required/);
+	assert.doesNotMatch(auth, /change-me-in-development/);
 	assert.match(
 		fs.readFileSync(path.join(targetDir, ".prettierignore"), "utf8"),
 		/generated\/prisma/
@@ -161,7 +205,6 @@ test("allows complete non-interactive flags without --yes", () => {
 		"none",
 		"--import-alias",
 		"~/*",
-		"--use-npm",
 		"--skip-install"
 	]);
 
@@ -202,27 +245,27 @@ test("rejects unknown feature flags", () => {
 	assert.match(result.stderr, /Unknown feature option: queues/);
 });
 
-test("rejects conflicting package manager flags", () => {
-	const result = runCli([
-		"manager-api",
-		"--features",
-		"none",
-		"--import-alias",
-		"@/*",
-		"--use-npm",
-		"--use-pnpm",
-		"--skip-install"
-	]);
+test("rejects unsupported package manager flags", () => {
+	const result = runCli(["manager-api", "--yes", "--skip-install", "--use-pnpm"]);
 
 	assert.equal(result.status, 1);
-	assert.match(result.stderr, /Choose only one package manager flag/);
+	assert.match(result.stderr, /unknown option '--use-pnpm'/);
 });
 
 test("rejects invalid import aliases", () => {
 	const result = runCreate("bad-alias-api", ["--import-alias", "@"]);
 
 	assert.equal(result.status, 1);
-	assert.match(result.stderr, /Import alias must end with \/\*/);
+	assert.match(result.stderr, /Import alias must be a non-relative specifier ending in \/\*/);
+});
+
+test("rejects relative and absolute import aliases", () => {
+	for (const alias of ["./*", "../*", "/app/*"]) {
+		const result = runCli(["--yes", "--skip-install", "--import-alias", alias]);
+
+		assert.equal(result.status, 1);
+		assert.match(result.stderr, /Import alias must be a non-relative specifier ending in \/\*/);
+	}
 });
 
 test("can remove built-in template pieces and disable import alias", () => {
@@ -358,6 +401,22 @@ test("generates auth helper while trimming logging cookies and dotenv", () => {
 
 	const server = fs.readFileSync(path.join(targetDir, "bin/server.ts"), "utf8");
 	assert.doesNotMatch(server, /dotenv|debug|server\.on\("listening"/);
+
+	fs.rmSync(tempDir, { recursive: true, force: true });
+});
+
+test("generates Prisma config without a dotenv import when dotenv is disabled", () => {
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "create-typescript-express-"));
+	const targetDir = path.join(tempDir, "prisma-no-dotenv-api");
+
+	const result = runCreate(targetDir, ["--features", "prisma", "--no-dotenv"]);
+
+	assert.equal(result.status, 0, result.stderr || result.stdout);
+	assert.doesNotMatch(
+		fs.readFileSync(path.join(targetDir, "prisma.config.ts"), "utf8"),
+		/dotenv/
+	);
+	assert.ok(!fs.existsSync(path.join(targetDir, ".env.example")));
 
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });

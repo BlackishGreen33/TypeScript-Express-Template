@@ -1,10 +1,4 @@
-import type {
-	FeatureDefinition,
-	FeatureName,
-	PackageManager,
-	TemplateToggle,
-	TogglePackages
-} from "./types.mjs";
+import type { FeatureDefinition, FeatureName, TemplateToggle, TogglePackages } from "./types.mjs";
 
 export const DEFAULT_IMPORT_ALIAS = "@/*";
 
@@ -62,13 +56,6 @@ export const featureDefinitions: Record<FeatureName, FeatureDefinition> = {
 };
 
 export const supportedFeatures = Object.keys(featureDefinitions) as FeatureName[];
-export const supportedPackageManagers = [
-	"npm",
-	"pnpm",
-	"yarn",
-	"bun"
-] as const satisfies readonly PackageManager[];
-
 export const togglePackages: Record<TemplateToggle, TogglePackages> = {
 	views: {
 		dependencies: ["pug"]

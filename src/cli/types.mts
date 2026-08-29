@@ -1,4 +1,3 @@
-export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 export type FeatureName = "security" | "validation" | "openapi" | "prisma" | "auth";
 export type TemplateToggle = "views" | "logging" | "cookies" | "dotenv";
 
@@ -40,7 +39,6 @@ export interface CreateConfig {
 	docker: boolean;
 	ci: boolean;
 	install: boolean;
-	packageManager: PackageManager;
 	yes: boolean;
 }
 
@@ -49,7 +47,7 @@ export type CreateConfigDraft = Omit<CreateConfig, "projectPath"> & {
 };
 
 export interface GeneratorLifecycle {
-	onInstallStart?: (packageManager: PackageManager) => void;
+	onInstallStart?: () => void;
 	onInstallEnd?: () => void;
 }
 
@@ -70,9 +68,5 @@ export interface PromptOptions {
 	docker?: boolean;
 	ci?: boolean;
 	skipInstall?: boolean;
-	useNpm?: boolean;
-	usePnpm?: boolean;
-	useYarn?: boolean;
-	useBun?: boolean;
 	yes?: boolean;
 }

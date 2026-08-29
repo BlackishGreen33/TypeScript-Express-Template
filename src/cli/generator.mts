@@ -40,13 +40,15 @@ const aliasImportFiles = [
 	"routes/index.ts",
 	"middleware/auth.ts",
 	"middleware/validateBody.ts",
-	"routes/handlers/modules/echo.ts"
+	"routes/handlers/modules/echo.ts",
+	"test/auth.test.ts"
 ];
 const noAliasImportReplacements: Record<string, string> = {
 	"@/app": "../app",
 	"@/routes/handlers": "./handlers",
 	"@/routes": "./routes",
 	"@/types": "../types",
+	"@/middleware/auth": "../middleware/auth",
 	"@/middleware/validateBody": "../middleware/validateBody",
 	"@/openapi": "./openapi"
 };
@@ -80,21 +82,21 @@ export function createProject(
 	writeJson(path.join(targetDir, "package.json"), generatedPackage);
 
 	const installShapeChanged = hasInstallShapeChanged(templatePackage, generatedPackage);
-	if (installShapeChanged && (!config.install || config.packageManager !== "npm")) {
+	if (installShapeChanged && !config.install) {
 		removePath(targetDir, "package-lock.json");
 	} else {
 		updateGeneratedPackageLock(targetDir, projectName);
 	}
 
 	if (config.install) {
-		installDependencies(targetDir, config.packageManager, lifecycle);
+		installDependencies(targetDir, lifecycle);
 	}
 
 	return {
 		projectName,
 		targetDir,
 		relativeTarget: path.relative(process.cwd(), targetDir) || ".",
-		lockfileRemoved: installShapeChanged && (!config.install || config.packageManager !== "npm")
+		lockfileRemoved: installShapeChanged && !config.install
 	};
 }
 
@@ -187,11 +189,11 @@ function applyFeatures(targetDir: string, packageJson: PackageJson, config: Crea
 	}
 
 	if (config.features.includes("prisma")) {
-		addPrisma(targetDir, packageJson);
+		addPrisma(targetDir, packageJson, config.dotenv);
 	}
 
 	if (config.features.includes("auth")) {
-		addAuth(targetDir);
+		addAuth(targetDir, config.dotenv);
 	}
 }
 
@@ -288,25 +290,37 @@ function disableViews(targetDir: string) {
 				""
 			],
 			[
-				`app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
+				`export function errorHandler(err: HttpError, req: Request, res: Response, _next: NextFunction) {
 \tconst status = err.status || 500;
+\tconst message =
+\t\tstatus >= 500 && req.app.get("env") !== "development"
+\t\t\t? "Internal Server Error"
+\t\t\t: err.message;
 
-\tres.locals.message = err.message;
+\tres.locals.message = message;
 \tres.locals.status = status;
 \tres.locals.error = req.app.get("env") === "development" ? err : {};
 
 \tres.status(status);
 \tres.render("error");
-});
+}
+
+app.use(errorHandler);
 `,
-				`app.use((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
+				`export function errorHandler(err: HttpError, req: Request, res: Response, _next: NextFunction) {
 \tconst status = err.status || 500;
+\tconst message =
+\t\tstatus >= 500 && req.app.get("env") !== "development"
+\t\t\t? "Internal Server Error"
+\t\t\t: err.message;
 
 \tres.status(status).json({
-\t\tmessage: err.message,
+\t\tmessage,
 \t\tstatus
 \t});
-});
+}
+
+app.use(errorHandler);
 `
 			]
 		])
@@ -368,9 +382,7 @@ function disableCookies(targetDir: string) {
 function disableDotenv(targetDir: string) {
 	removePath(targetDir, ".env.example");
 	updateTextFile(path.join(targetDir, "bin/server.ts"), (text) =>
-		text
-			.replace('import * as dotenv from "dotenv";\n\n', "")
-			.replace("dotenv.config();\n\n", "")
+		text.replace('import "dotenv/config";\n\n', "")
 	);
 }
 
@@ -491,23 +503,35 @@ test("GET /openapi.json returns the generated OpenAPI document", async () => {
 	);
 }
 
-function addPrisma(targetDir: string, packageJson: PackageJson) {
+function addPrisma(targetDir: string, packageJson: PackageJson, dotenvEnabled: boolean) {
 	copySnippet(snippetsDir, targetDir, "prisma/schema.prisma", "prisma/schema.prisma");
 	copySnippet(snippetsDir, targetDir, "prisma/prisma.ts", "lib/prisma.ts");
 	copySnippet(snippetsDir, targetDir, "prisma/prisma.config.ts", "prisma.config.ts");
-	appendIgnoreEntry(targetDir, ".prettierignore", "generated/prisma");
-	appendIgnoreEntry(targetDir, ".gitignore", "generated/prisma");
+	if (dotenvEnabled) {
+		appendUniqueLine(targetDir, ".env.example", "DATABASE_URL=file:./dev.db");
+	} else {
+		updateTextFile(path.join(targetDir, "prisma.config.ts"), (text) =>
+			text.replace('import "dotenv/config";\n\n', "")
+		);
+	}
+	appendUniqueLine(targetDir, ".prettierignore", "generated/prisma");
+	appendUniqueLine(targetDir, ".gitignore", "generated/prisma");
 	packageJson.overrides = {
 		...(packageJson.overrides || {}),
-		"@hono/node-server": "1.19.13"
+		"@hono/node-server": "1.19.13",
+		"deepmerge-ts": "8.0.2"
 	};
 	packageJson.scripts.postinstall = "prisma generate";
 	packageJson.scripts["prisma:generate"] = "prisma generate";
 	packageJson.scripts["prisma:migrate"] = "prisma migrate dev";
 }
 
-function addAuth(targetDir: string) {
+function addAuth(targetDir: string, dotenvEnabled: boolean) {
 	copySnippet(snippetsDir, targetDir, "auth/auth.ts", "middleware/auth.ts");
+	copySnippet(snippetsDir, targetDir, "auth/auth.test.ts", "test/auth.test.ts");
+	if (dotenvEnabled) {
+		appendUniqueLine(targetDir, ".env.example", "JWT_SECRET=");
+	}
 }
 
 function insertAfter(text: string, marker: string, addition: string) {
@@ -615,7 +639,7 @@ function writeSelectedOptions(targetDir: string, config: CreateConfig) {
 	}
 }
 
-function appendIgnoreEntry(targetDir: string, fileName: string, entry: string) {
+function appendUniqueLine(targetDir: string, fileName: string, entry: string) {
 	updateTextFile(path.join(targetDir, fileName), (text) => {
 		if (text.split(/\r?\n/).includes(entry)) {
 			return text;
@@ -625,14 +649,10 @@ function appendIgnoreEntry(targetDir: string, fileName: string, entry: string) {
 	});
 }
 
-function installDependencies(
-	targetDir: string,
-	packageManager: CreateConfig["packageManager"],
-	lifecycle: GeneratorLifecycle
-) {
-	const command = packageManager;
-	const args = packageManager === "yarn" ? ["install"] : ["install"];
-	lifecycle.onInstallStart?.(packageManager);
+function installDependencies(targetDir: string, lifecycle: GeneratorLifecycle) {
+	const command = "npm";
+	const args = ["install"];
+	lifecycle.onInstallStart?.();
 
 	const result = spawnSync(command, args, {
 		cwd: targetDir,

@@ -27,15 +27,21 @@ app.use((_req: Request, _res: Response, next: NextFunction) => {
 	next(createError(404, "Not Found"));
 });
 
-app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
+export function errorHandler(err: HttpError, req: Request, res: Response, _next: NextFunction) {
 	const status = err.status || 500;
+	const message =
+		status >= 500 && req.app.get("env") !== "development"
+			? "Internal Server Error"
+			: err.message;
 
-	res.locals.message = err.message;
+	res.locals.message = message;
 	res.locals.status = status;
 	res.locals.error = req.app.get("env") === "development" ? err : {};
 
 	res.status(status);
 	res.render("error");
-});
+}
+
+app.use(errorHandler);
 
 export default app;
