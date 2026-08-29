@@ -41,7 +41,7 @@
 		"@types/node": "^24.12.2",
 		"@types/supertest": "^7.2.0",
 		"eslint": "^10.2.1",
-		"globals": "^17.5.0",
+		"globals": "^17.11.0",
 		"prettier": "3.9.6",
 		"supertest": "^7.2.2",
 		"tsc-alias": "^1.8.16",
