@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D24-339933?logo=node.js&logoColor=white">
+  <img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D22.13-339933?logo=node.js&logoColor=white">
   <img alt="Express" src="https://img.shields.io/badge/express-5.x-000000?logo=express&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/typescript-6.x-3178C6?logo=typescript&logoColor=white">
   <img alt="License" src="https://img.shields.io/github/license/BlackishGreen33/TypeScript-Express-Template">
@@ -27,7 +27,7 @@ It is designed for teams that want a clean base that runs immediately after crea
 
 - Express 5 with TypeScript strict mode.
 - Interactive CLI prompts inspired by `create-next-app`.
-- Node 24 LTS baseline and npm lockfile support.
+- Node.js 22.13+ support, with Node.js 24 recommended.
 - `@/*` TypeScript import alias configured for both development and production builds.
 - `tsx` development server, compiled production output, and static asset copying.
 - ESLint, Prettier, `node:test`, Supertest, and GitHub Actions.
@@ -116,7 +116,7 @@ The generated application exposes:
 
 This repository is the npm initializer package. The application that users receive lives in `template/`.
 
-Use Node 24 for local development. The root package and generated template both include `.nvmrc` and `.node-version` files that point to the same runtime baseline. Switch to Node 24 before installing dependencies or running checks.
+Node.js 22.13 or newer is supported, and Node.js 24 is recommended for local development. The root package and generated template both include `.nvmrc` and `.node-version` files that select Node.js 24.
 
 ```bash
 fnm use || nvm use

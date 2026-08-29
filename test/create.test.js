@@ -97,6 +97,7 @@ test("creates a project from the bundled template", () => {
 	assert.equal(generatedPackage.name, "my-api");
 	assert.equal(generatedPackage.version, "0.1.0");
 	assert.equal(generatedPackage.private, true);
+	assert.equal(generatedPackage.engines.node, ">=22.13.0");
 	assert.equal(generatedPackage.dependencies.express, "^5.2.1");
 	assert.equal(generatedPackage.devDependencies.prettier, "3.9.6");
 	assert.equal(generatedPackage.devDependencies["tsc-alias"], "^1.8.16");
@@ -120,6 +121,7 @@ test("creates a project from the bundled template", () => {
 	assert.equal(generatedLock.version, "0.1.0");
 	assert.equal(generatedLock.packages[""].name, "my-api");
 	assert.equal(generatedLock.packages[""].version, "0.1.0");
+	assert.equal(generatedLock.packages[""].engines.node, ">=22.13.0");
 
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });

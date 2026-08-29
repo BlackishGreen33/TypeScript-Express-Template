@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D24-339933?logo=node.js&logoColor=white">
+  <img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D22.13-339933?logo=node.js&logoColor=white">
   <img alt="Express" src="https://img.shields.io/badge/express-5.x-000000?logo=express&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/typescript-6.x-3178C6?logo=typescript&logoColor=white">
   <img alt="License" src="https://img.shields.io/github/license/BlackishGreen33/TypeScript-Express-Template">
@@ -27,7 +27,7 @@
 
 - Express 5 与 TypeScript strict mode。
 - 受 `create-next-app` 启发的交互式 CLI prompts。
-- Node 24 LTS 基线与 npm lockfile。
+- 支持 Node.js 22.13 以上版本，并建议使用 Node.js 24。
 - 已配置 `@/*` TypeScript import alias，development 与 production build 都可用。
 - `tsx` 开发服务器、可编译的 production output、静态资源复制。
 - ESLint、Prettier、`node:test`、Supertest 与 GitHub Actions。
@@ -116,7 +116,7 @@ my-api
 
 这个 repository 是 npm initializer package。用户真正会收到的应用模板放在 `template/`。
 
-本地开发请使用 Node 24。根目录 package 和生成后的模板都包含 `.nvmrc` 与 `.node-version`，并指向同一个 runtime 基线。安装 dependencies 或执行检查前，请先切换到 Node 24。
+支持 Node.js 22.13 以上版本，并建议本地开发使用 Node.js 24。根目录 package 和生成后的模板都包含 `.nvmrc` 与 `.node-version`，默认选用 Node.js 24。
 
 ```bash
 fnm use || nvm use

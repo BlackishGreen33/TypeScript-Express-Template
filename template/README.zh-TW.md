@@ -13,7 +13,7 @@
 ## 功能
 
 - Express 5 與 TypeScript strict mode。
-- Node 24 LTS 基線與 npm lockfile。
+- 支援 Node.js 22.13 以上版本，並建議使用 Node.js 24。
 - 內部 TypeScript modules 使用 `@/*` import alias。
 - 使用 `tsx` watch mode 進行本地開發。
 - ESLint、Prettier、`node:test` 與 Supertest。
@@ -21,7 +21,7 @@
 
 ## 開始使用
 
-請使用 Node 24。這個專案包含 `.nvmrc` 與 `.node-version`，可供版本管理工具讀取。安裝 dependencies 或執行檢查前，請先切換到 Node 24。
+支援 Node.js 22.13 以上版本，並建議使用 Node.js 24。這個專案包含 `.nvmrc` 與 `.node-version`，預設選用 Node.js 24。
 
 ```bash
 fnm use || nvm use
