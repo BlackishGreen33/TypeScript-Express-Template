@@ -94,13 +94,19 @@ test("creates a project from the bundled template", () => {
 	const generatedPackage = JSON.parse(
 		fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
 	);
+	const templatePackage = JSON.parse(
+		fs.readFileSync(path.join(rootDir, "template/package.json"), "utf8")
+	);
 	assert.equal(generatedPackage.name, "my-api");
 	assert.equal(generatedPackage.version, "0.1.0");
 	assert.equal(generatedPackage.private, true);
 	assert.equal(generatedPackage.engines.node, ">=22.13.0");
 	assert.equal(generatedPackage.dependencies.express, "^5.2.1");
 	assert.equal(generatedPackage.devDependencies.prettier, "3.9.6");
-	assert.equal(generatedPackage.devDependencies["tsc-alias"], "^1.8.16");
+	assert.equal(
+		generatedPackage.devDependencies["tsc-alias"],
+		templatePackage.devDependencies["tsc-alias"]
+	);
 	assert.equal(
 		generatedPackage.scripts.build,
 		"npm run ts-build && tsc-alias && npm run copy-static"

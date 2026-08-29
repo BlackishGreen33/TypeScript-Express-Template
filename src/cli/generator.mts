@@ -217,7 +217,9 @@ function applyAlias(targetDir: string, packageJson: PackageJson, alias: string |
 		[alias || DEFAULT_IMPORT_ALIAS]: ["./*"]
 	};
 	tsconfig.compilerOptions.ignoreDeprecations = "6.0";
-	addPackages(packageJson, "devDependencies", { "tsc-alias": "^1.8.16" });
+	if (!packageJson.devDependencies?.["tsc-alias"]) {
+		addPackages(packageJson, "devDependencies", { "tsc-alias": "^1.8.16" });
+	}
 	packageJson.scripts.build = "npm run ts-build && tsc-alias && npm run copy-static";
 
 	if (alias && alias !== DEFAULT_IMPORT_ALIAS) {
