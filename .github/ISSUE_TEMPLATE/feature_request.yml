@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest a focused improvement to the initializer or generated app.
+title: "[Feature]: "
+body:
+    - type: textarea
+      id: problem
+      attributes:
+          label: Problem
+          description: What concrete workflow is difficult today?
+      validations:
+          required: true
+
+    - type: textarea
+      id: proposal
+      attributes:
+          label: Proposed change
+          description: Describe the smallest useful behavior and whether it belongs in the default template or an optional feature.
+      validations:
+          required: true
+
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: Alternatives considered
+          description: Include existing commands or packages you already tried.
+
+    - type: checkboxes
+      id: scope
+      attributes:
+          label: Scope check
+          options:
+              - label: This is useful for newly generated Express projects, not only one application.
+                required: true

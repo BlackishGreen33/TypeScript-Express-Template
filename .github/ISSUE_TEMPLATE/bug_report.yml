@@ -1,0 +1,72 @@
+name: Bug report
+description: Report a reproducible problem with the initializer or generated app.
+title: "[Bug]: "
+body:
+    - type: markdown
+      attributes:
+          value: Thanks for helping improve create-typescript-express.
+
+    - type: input
+      id: version
+      attributes:
+          label: Initializer version
+          description: Run `npm view create-typescript-express version` if you are unsure.
+          placeholder: 1.1.3
+      validations:
+          required: true
+
+    - type: input
+      id: runtime
+      attributes:
+          label: Node.js and npm versions
+          description: Paste the output of `node --version && npm --version`.
+          placeholder: Node.js v24.15.0, npm 11.12.1
+      validations:
+          required: true
+
+    - type: textarea
+      id: command
+      attributes:
+          label: Creation command
+          description: Include the project name, flags, and selected feature groups.
+          render: shell
+      validations:
+          required: true
+
+    - type: textarea
+      id: reproduction
+      attributes:
+          label: Reproduction steps
+          description: Provide the smallest sequence that reproduces the problem in a fresh directory.
+          placeholder: |
+              1. Run the creation command.
+              2. Change into the generated directory.
+              3. Run ...
+      validations:
+          required: true
+
+    - type: textarea
+      id: expected
+      attributes:
+          label: Expected behavior
+      validations:
+          required: true
+
+    - type: textarea
+      id: actual
+      attributes:
+          label: Actual behavior and logs
+          description: Remove secrets before pasting logs.
+          render: shell
+      validations:
+          required: true
+
+    - type: checkboxes
+      id: checks
+      attributes:
+          label: Checks
+          options:
+              - label: I reproduced this with a newly generated project.
+                required: true
+              - label: I removed credentials and other sensitive information from the report.
+                required: true
