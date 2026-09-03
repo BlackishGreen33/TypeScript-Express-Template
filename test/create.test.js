@@ -153,7 +153,8 @@ test("generates selected feature groups without a stale npm lockfile", () => {
 	assert.equal(generatedPackage.dependencies.jose, "^6.2.3");
 	assert.deepEqual(generatedPackage.overrides, {
 		"@hono/node-server": "1.19.13",
-		"deepmerge-ts": "8.0.2"
+		"deepmerge-ts": "8.0.2",
+		mysql2: "3.24.3"
 	});
 	assert.equal(generatedPackage.scripts.postinstall, "prisma generate");
 	assert.equal(generatedPackage.scripts["prisma:generate"], "prisma generate");

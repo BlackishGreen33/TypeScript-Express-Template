@@ -521,7 +521,8 @@ function addPrisma(targetDir: string, packageJson: PackageJson, dotenvEnabled: b
 	packageJson.overrides = {
 		...(packageJson.overrides || {}),
 		"@hono/node-server": "1.19.13",
-		"deepmerge-ts": "8.0.2"
+		"deepmerge-ts": "8.0.2",
+		mysql2: "3.24.3"
 	};
 	packageJson.scripts.postinstall = "prisma generate";
 	packageJson.scripts["prisma:generate"] = "prisma generate";
