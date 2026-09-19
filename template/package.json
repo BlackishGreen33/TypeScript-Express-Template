@@ -28,7 +28,7 @@
 		"dotenv": "^17.4.2",
 		"express": "^5.2.1",
 		"http-errors": "^2.0.1",
-		"morgan": "^1.10.1",
+		"morgan": "^1.12.1",
 		"pug": "^3.0.3"
 	},
 	"devDependencies": {
@@ -38,15 +38,15 @@
 		"@types/express": "^5.0.6",
 		"@types/http-errors": "^2.0.5",
 		"@types/morgan": "^1.9.10",
-		"@types/node": "^24.13.3",
+		"@types/node": "^24.13.5",
 		"@types/supertest": "^7.2.1",
-		"eslint": "^10.9.1",
-		"globals": "^17.11.0",
-		"prettier": "3.9.6",
+		"eslint": "^10.10.0",
+		"globals": "^17.12.0",
+		"prettier": "3.9.7",
 		"supertest": "^7.2.2",
-		"tsc-alias": "^1.9.2",
-		"tsx": "^4.23.12",
+		"tsc-alias": "^1.9.5",
+		"tsx": "^4.23.13",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.68.0"
+		"typescript-eslint": "^8.70.0"
 	}
 }
