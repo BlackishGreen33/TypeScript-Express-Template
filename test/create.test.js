@@ -101,8 +101,11 @@ test("creates a project from the bundled template", () => {
 	assert.equal(generatedPackage.version, "0.1.0");
 	assert.equal(generatedPackage.private, true);
 	assert.equal(generatedPackage.engines.node, ">=22.13.0");
-	assert.equal(generatedPackage.dependencies.express, "^5.2.1");
-	assert.equal(generatedPackage.devDependencies.prettier, "3.9.6");
+	assert.equal(generatedPackage.dependencies.express, templatePackage.dependencies.express);
+	assert.equal(
+		generatedPackage.devDependencies.prettier,
+		templatePackage.devDependencies.prettier
+	);
 	assert.equal(
 		generatedPackage.devDependencies["tsc-alias"],
 		templatePackage.devDependencies["tsc-alias"]
